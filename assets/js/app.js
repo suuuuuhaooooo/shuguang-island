@@ -1,7 +1,7 @@
 /* 數光島前端。所有判斷（答案、獎勵、解鎖、對戰勝負）都在伺服器，這裡只負責顯示與送出動作。 */
 import { esc, tx } from "./tx.js";
 import { Zhuyin } from "./zhuyin.js";
-import { Settings, Snd } from "./audio.js";
+import { Settings, Snd, TRACKS } from "./audio.js";
 import { art, initArt, pic, uiIcon } from "./art.js";
 import { cpuSay } from "./cpu-lines.js";
 import { vec } from "./art-svg.js";
@@ -81,6 +81,7 @@ async function settingsModal() {
   const draw = () => {
     m.innerHTML = `<div><h3>設定</h3>
     <div class="set"><span>背景音樂</span>${seg("bgm", [[true, "開"], [false, "關"]])}</div>
+    <div class="set"><span>曲目</span>${seg("music", TRACKS)}</div>
     <div class="set"><span>音量</span><input type="range" min="0" max="1" step="0.1" value="${S().bgmVol}" data-rng="bgmVol" aria-label="音樂音量" style="width:140px"></div>
     <div class="set"><span>音效</span>${seg("sfx", [[true, "開"], [false, "關"]])}</div>
     <div class="set"><span>音量</span><input type="range" min="0" max="1" step="0.1" value="${S().sfxVol}" data-rng="sfxVol" aria-label="音效音量" style="width:140px"></div>

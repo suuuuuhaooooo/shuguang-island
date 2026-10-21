@@ -2,7 +2,7 @@
    有檔案就用檔案(assets/audio/bgm_town.mp3、sfx_ok.mp3 …),沒有就用瀏覽器即時合成的簡單音樂與音效,所以不放任何音檔也有聲音。
    瀏覽器規定要使用者點過畫面才能發聲,所以第一次點擊後才會開始播放。 */
 const KEY = "si-settings";
-const DEF = { bgm: true, bgmVol: 0.5, sfx: true, sfxVol: 0.7, zy: "auto", fs: "m", cursor: true, motion: true };
+const DEF = { music: "auto", bgm: true, bgmVol: 0.5, sfx: true, sfxVol: 0.7, zy: "auto", fs: "m", cursor: true, motion: true };
 let S = { ...DEF }; try { S = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch {}
 const subs = [];
 export const Settings = {
@@ -36,17 +36,38 @@ function schedule() {
   }
 }
 async function hasFile(url) { try { const r = await fetch(url, { method: "HEAD" }); return r.ok && /audio|octet/.test(r.headers.get("content-type") || "audio"); } catch { return false; } }
+/* 可選的背景音樂:放進 assets/audio/bgm_a.mp3、bgm_b.mp3、bgm_c.mp3 就會出現在設定裡;「自動」是依場景用 bgm_town / bgm_quiz … */
+export const TRACKS = [["auto", "依場景自動"], ["a", "晨曦廣場"], ["b", "森林小徑"], ["c", "星空營火"]];
+const MAIN = new Set(["town", "quiz"]); // 選了曲目時,這兩個場景(地圖、練習)改播選的曲目;對戰與勝利維持自己的音樂
+let bgmGain = null, src = null;
+const fileKey = (name) => (MAIN.has(name) && S.music && S.music !== "auto" ? S.music : name);
+/* 無縫循環:用 Web Audio 把整首解碼進記憶體再 loop(<audio loop> 在接點會有空白);解碼失敗才退回 <audio> */
+let playId = 0;
+async function startLoop(url, id) {
+  if (ac()) {
+    try {
+      const buf = await (await fetch(url)).arrayBuffer(), dec = await ctx.decodeAudioData(buf);
+      if (id !== playId) return true; // 解碼期間已經換場景了
+      if (!bgmGain) { bgmGain = ctx.createGain(); bgmGain.connect(ctx.destination); }
+      bgmGain.gain.value = S.bgmVol; src = ctx.createBufferSource(); src.buffer = dec; src.loop = true; src.connect(bgmGain); src.start(0); if (ctx.state === "suspended") ctx.resume(); return true;
+    } catch { src = null; }
+  }
+  el = new Audio(url); el.loop = true; el.volume = S.bgmVol; el.play().catch(() => {}); return true;
+}
 async function playScene(name) {
-  stopAll(); scene = name; if (!S.bgm || !unlocked) return;
-  if (fileScenes[name] === undefined) fileScenes[name] = (window.SI_CONFIG && window.SI_CONFIG.audio) ? await hasFile(`assets/audio/bgm_${name}.mp3`) : false;
-  if (scene !== name) return;
-  if (fileScenes[name]) { el = new Audio(`assets/audio/bgm_${name}.mp3`); el.loop = true; el.volume = S.bgmVol; el.play().catch(() => {}); return; }
+  stopAll(); scene = name; const id = ++playId; if (!S.bgm || !unlocked) return;
+  let key = fileKey(name);
+  const exists = async (k) => { if (fileScenes[k] === undefined) fileScenes[k] = (window.SI_CONFIG && window.SI_CONFIG.audio) ? await hasFile(`assets/audio/bgm_${k}.mp3`) : false; return fileScenes[k]; };
+  if (key !== name && !(await exists(key))) key = name; // 選的曲目檔案不存在 → 退回場景預設
+  const ok = await exists(key);
+  if (id !== playId) return;
+  if (ok) { await startLoop(`assets/audio/bgm_${key}.mp3`, id); return; }
   if (!ac()) return; if (ctx.state === "suspended") ctx.resume(); master.gain.value = 1; step = 0; nextT = ctx.currentTime + 0.1; timer = setInterval(schedule, 120);
 }
-function stopAll() { clearInterval(timer); timer = 0; if (el) { el.pause(); el = null; } }
+function stopAll() { clearInterval(timer); timer = 0; if (el) { el.pause(); el = null; } if (src) { try { src.stop(); } catch {} src.disconnect(); src = null; } }
 export const Snd = {
   unlock() { if (unlocked) return; unlocked = true; ac(); if (ctx && ctx.state === "suspended") ctx.resume(); if (want) playScene(want); },
-  bgm(name) { want = name; if (scene === name && (timer || el)) return; if (unlocked) playScene(name); else scene = name; },
+  bgm(name) { want = name; if (scene === name && (timer || el || src)) return; if (unlocked) playScene(name); else scene = name; },
   stop() { want = null; scene = null; stopAll(); },
   sfx(name) {
     if (!S.sfx || !unlocked || !ac()) return; if (ctx.state === "suspended") ctx.resume();
@@ -63,6 +84,6 @@ export const Snd = {
     if (window.SI_CONFIG && window.SI_CONFIG.audio) { try { const a = new Audio(`assets/audio/sfx_${name}.mp3`); a.volume = Math.min(1, S.sfxVol); a.addEventListener("error", synth); a.play().catch(synth); } catch { synth(); } } else synth();
   },
 };
-Settings.on((k) => { if (k === "bgm") { if (S.bgm) playScene(want || scene || "town"); else stopAll(); } if (k === "bgmVol" && el) el.volume = S.bgmVol; });
+Settings.on((k) => { if (k === "bgm") { if (S.bgm) playScene(want || scene || "town"); else stopAll(); } if (k === "bgmVol") { if (el) el.volume = S.bgmVol; if (bgmGain) bgmGain.gain.value = S.bgmVol; } if (k === "music" && S.bgm && unlocked) playScene(want || scene || "town"); });
 document.addEventListener("visibilitychange", () => { if (document.hidden) { stopAll(); } else if (want && S.bgm && unlocked) playScene(want); });
 ["pointerdown", "keydown", "touchstart"].forEach((e) => addEventListener(e, () => Snd.unlock(), { passive: true }));
