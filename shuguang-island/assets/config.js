@@ -12,5 +12,7 @@ window.SI_CONFIG = {
   art: false,
   /* 音樂與音效檔放進 assets/audio/ 之後改成 true(bgm_town.mp3、bgm_quiz.mp3、bgm_battle.mp3、bgm_win.mp3、sfx_*.mp3)。false 時用瀏覽器即時合成的簡單音樂。 */
   audio: false,
+  /* 循環動態影片放進 assets/video/(title.mp4、world.mp4、battle.mp4,6–10 秒、可無縫循環、小於 3MB)之後改成 true。沒有影片時,畫面本來就有 SVG 動畫。 */
+  video: false,
   idleMinutes: 20
 };
