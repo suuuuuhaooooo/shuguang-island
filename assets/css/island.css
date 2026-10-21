@@ -380,3 +380,6 @@ details>summary{font-family:var(--serif)}
 .no-motion .marq-in{animation:none}.no-motion .marq-win{white-space:normal;mask-image:none;-webkit-mask-image:none}.no-motion .marq-in span+span{display:none}
 @media(prefers-reduced-motion:reduce){.marq-in{animation:none}.marq-win{white-space:normal;mask-image:none;-webkit-mask-image:none}.marq-in span+span{display:none}}
 .marq-win{container-type:inline-size}.marq-in span{min-width:100cqw;box-sizing:border-box}
+
+/* 頂欄底部的裝飾邊(圓點、陰影)會往下多出約 12px,留一點空間,內容才不會被切到 */
+.top{margin-bottom:16px!important}
