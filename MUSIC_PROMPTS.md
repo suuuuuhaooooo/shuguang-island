@@ -62,3 +62,12 @@ like gathering around a fire before the next quest. Never aggressive.
 玩家在「設定 → 曲目」選「晨曦廣場 / 森林小徑 / 星空營火 / 依場景自動」。
 選了曲目後,地圖和練習會播那一首;對戰與勝利仍用各自的音樂。
 (網站用記憶體解碼循環播放,所以只要檔案本身頭尾接得上,播放時就不會有空白。)
+
+## 之後想再加歌
+1. 檔案放進 `assets/audio/`,命名 `bgm_<代號>.mp3`(代號用小寫英文或數字,例如 `bgm_d.mp3`)。
+2. 打開 `assets/audio/tracks.json`,照格式加一行,例如:
+```
+{ "id": "d", "name": "海邊市集" }
+```
+(每行用逗號隔開,最後一行不要逗號;名稱建議 6 個字以內。)
+3. commit、push。設定的下拉選單就會多一首。

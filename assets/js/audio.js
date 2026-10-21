@@ -38,6 +38,8 @@ function schedule() {
 async function hasFile(url) { try { const r = await fetch(url, { method: "HEAD" }); return r.ok && /audio|octet/.test(r.headers.get("content-type") || "audio"); } catch { return false; } }
 /* 可選的背景音樂:放進 assets/audio/bgm_a.mp3、bgm_b.mp3、bgm_c.mp3 就會出現在設定裡;「自動」是依場景用 bgm_town / bgm_quiz … */
 export const TRACKS = [["auto", "依場景自動"], ["a", "晨曦廣場"], ["b", "森林小徑"], ["c", "星空營火"]];
+/* 想加歌:檔案放 assets/audio/bgm_<代號>.mp3,再在 assets/audio/tracks.json 加一行 {"id":"代號","name":"顯示名稱"}(不用改程式) */
+fetch("assets/audio/tracks.json").then((r) => (r.ok ? r.json() : null)).then((j) => { if (Array.isArray(j) && j.length) { TRACKS.length = 1; j.forEach((t) => t && /^[a-z0-9_]{1,20}$/.test(t.id || "") && t.name && TRACKS.push([t.id, String(t.name).slice(0, 12)])); } }).catch(() => {});
 const MAIN = new Set(["town", "quiz"]); // 選了曲目時,這兩個場景(地圖、練習)改播選的曲目;對戰與勝利維持自己的音樂
 let bgmGain = null, src = null;
 const fileKey = (name) => (MAIN.has(name) && S.music && S.music !== "auto" ? S.music : name);
