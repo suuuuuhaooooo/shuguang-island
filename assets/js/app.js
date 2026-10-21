@@ -165,11 +165,7 @@ function startIdle() {
 /* ---------- 外框與路由 ---------- */
 const go = (p) => { location.hash = "#" + p; };
 const TABS = [["/town", "", "地圖", "ic_home"], ["/practice", "", "練習", "ic_practice"], ["/duel", "", "對戰", "ic_duel"], ["/quests", "", "任務", "ic_quest"], ["/bag", "", "背包", "ic_bag"], ["/book", "", "圖鑑", "ic_book"]];
-<<<<<<< HEAD
-const lvBar = () => { const w = ME.wallet, st = ME.config.levelStep, base = (w.lv - 1) * st; return Math.max(0, Math.min(100, ((w.earned - base) / st) * 100)); };
-=======
 const lvBar = () => { const w = ME.wallet; if (w.nextAt == null) return 100; return Math.max(0, Math.min(100, ((w.earned - w.base) / Math.max(1, w.nextAt - w.base)) * 100)); };
->>>>>>> a6e125a (更新數光島六年版)
 function chrome(active) {
   const w = ME.wallet, p = ME.player;
   $("#app").innerHTML = `<header class="top"><div class="who">${avatar(p && p.look)}<div class="nm">${esc(p ? p.nick : ME.user.name)}<small>${esc(ME.user.name)}・Lv ${w.lv}</small></div>
@@ -236,11 +232,7 @@ VIEWS.town = async () => {
       : `<a class="pin lock" style="left:${px}%;top:${py}%" href="javascript:void 0" data-act="hint" data-h="${esc(x.hint || "繼續冒險就會開放")}"><span class="dot">${uiIcon("ic_lock", "")}</span><span class="lbl">？？？</span></a>`;
   }).join("")}</div>`;
   bind(m, {
-<<<<<<< HEAD
-    ck: async () => { const r = await POST("/checkin"); await refreshMe(); if (r.already) toast("今天已經簽到過囉!"); else { Snd.sfx("coin"); toast(`簽到成功!連續 ${r.streak} 天,+${r.reward} 結晶`); } await announce(r.unlocked); },
-=======
     ck: async () => { const r = await POST("/checkin"); await refreshMe(); if (r.already) toast("今天已經簽到過囉!"); else { Snd.sfx("coin"); toast(`簽到成功!連續 ${r.streak} 天,+${r.reward} 結晶、+${r.dew || 0} 露水`); } await announce(r.unlocked); },
->>>>>>> a6e125a (更新數光島六年版)
     hint: (b) => toast("" + b.dataset.h),
   });
   await announce(w.unlocked);
@@ -264,11 +256,7 @@ VIEWS.talk = async ([npcId]) => {
     await refreshMe();
     if (!r.node || (r.end && !r.node.text)) { await announce(r.unlocked); return go("/town"); }
     const n = r.node;
-<<<<<<< HEAD
-    m.innerHTML = `<div class="card dlg"><div class="npcbox"><div class="av">${pic(r.npc.id, "")}</div><div class="name">${tx(r.npc.name)}</div></div><p class="say">${tx(n.text)}</p>
-=======
     m.innerHTML = `<div class="card dlg"><div class="npcbox"><div class="av has"><span class="avs">${pic(r.npc.id, "")}</span></div><div class="name">${tx(r.npc.name)}</div></div><p class="say">${tx(n.text)}</p>
->>>>>>> a6e125a (更新數光島六年版)
     ${n.choices.map((c) => `<button class="btn alt choice" data-act="pick" data-i="${c.i}">${tx(c.t)}</button>`).join("")}
     ${!n.choices.length ? `<button class="btn" data-act="${n.next ? "next" : "end"}">${n.next ? "繼續 ▶" : "好的!"}</button>` : ""}</div>`;
     bind(m, {
@@ -456,11 +444,7 @@ function choose(html, items) { // 選單視窗:回傳選到的 index 或 null
 VIEWS.farm = async () => {
   const m = chrome("/town"); const draw = async () => {
     const r = await GET("/farm");
-<<<<<<< HEAD
-    m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">農場</h2><span class="tag">露水 ${r.dew}</span></div><p class="muted sm" style="color:#5a4328">作物沒澆水只是長得慢,不會枯死。</p>
-=======
     m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">農場</h2><span class="tag">露水 ${r.dew}</span></div><p class="muted sm" style="color:#5a4328">作物沒澆水只是長得慢,不會枯死。${r.dew ? "" : "<br>露水用完了:答對題目、每日簽到都會得到露水。"}</p>
->>>>>>> a6e125a (更新數光島六年版)
     <div class="grid">${r.slots.map((s) => s.crop ? `<div class="card slot"><span class="emo">${s.ready ? pic(`${s.crop}_3`, STAGE[3]) : pic(`${s.crop}_${s.stage}`, STAGE[s.stage])}</span><b>${tx(s.name)}</b><br><small class="muted">${s.ready ? "可以收成了!" : s.needsWater ? `需要澆水 ${s.waters}/${s.need}` : `還要約 ${s.minutesLeft} 分鐘`}</small>
       <div style="margin-top:8px">${s.ready ? `<button class="btn green sm" data-act="hv" data-s="${s.slot}">收成</button>` : s.needsWater ? `<button class="btn sm" data-act="wt" data-s="${s.slot}" ${r.dew ? "" : "disabled"}>澆水</button>` : `<small class="muted">長大中…</small>`}</div></div>`
       : `<div class="card slot"><span class="emo muted">${pic("plot_empty", "")}</span><small class="muted">空地</small><div style="margin-top:8px"><button class="btn alt sm" data-act="pl" data-s="${s.slot}">種植</button></div></div>`).join("")}</div>
@@ -507,11 +491,7 @@ VIEWS.shop = async () => {
     m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">叮噹百寶屋</h2><span class="tag">Lv ${r.lv}</span></div>
     <div class="seg pick">${cats.map((c) => `<button class="${c === SHOPCAT ? "on" : ""}" data-act="cat" data-c="${c}">${CATS[c] || c}</button>`).join("")}</div>
     <div class="grid">${r.items.filter((i) => i.cat === SHOPCAT).map((i) => `<div class="card slot ${i.locked ? "lock" : ""}"><span class="emo">${itemPic(i.id, "")}</span><b>${tx(i.name)}</b><br>
-<<<<<<< HEAD
-      <small class="muted">${i.free ? "免費" : "<i class='gemi'></i> " + i.price}${i.maxOwn < 99 ? `・${i.owned}/${i.maxOwn}` : i.owned ? `・已有 ${i.owned}` : ""}</small>
-=======
       <small class="muted">${i.free ? "免費" : "<i class='gemi'></i> " + (i.nextPrice || i.price)}${i.maxOwn < 99 ? `・${i.owned}/${i.maxOwn}` : i.owned ? `・已有 ${i.owned}` : ""}</small>
->>>>>>> a6e125a (更新數光島六年版)
       <div style="margin-top:8px">${i.locked ? `<small class="muted">Lv ${i.minLv} 解鎖</small>` : i.free ? `<small class="muted">一開始就有</small>` : i.owned >= i.maxOwn ? `<small>已擁有</small>` : `<button class="btn sm" data-act="buy" data-id="${esc(i.id)}">購買</button>${i.maxOwn > 1 ? ` <button class="btn alt sm" data-act="buy" data-id="${esc(i.id)}" data-n="5">×5</button>` : ""}`}</div></div>`).join("")}</div>`;
     bind(m, {
       cat: (b) => { SHOPCAT = b.dataset.c; draw(); },
