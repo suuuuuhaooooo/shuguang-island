@@ -38,7 +38,7 @@ const ERR = {
   bad_content: "內容格式有誤。", not_sellable: "這個不能賣。", bad_level: "沒有這個等級的夥伴。", no_duel: "找不到這場對戰。", bad_round: "回合已經過了。", not_open: "回合還沒開始,再等一下。",
   no_room: "找不到這個房間,或對戰已經開始了。", own_room: "這是你自己開的房間喔。", other_class: "只能和同班同學對戰。", room_full: "這個房間已經滿了。", bad_domain: "領域選擇有誤。"
 };
-const errMsg = (e) => ERR[e && e.code] || ("出了點問題(" + ((e && e.code) || "?") + ")");
+const errMsg = (e) => (ERR[e && e.code] || ("出了點問題(" + ((e && e.code) || "?") + ")")) + (e && e.code === "server" && e.ref ? "(錯誤碼:" + e.ref + ")" : "");
 
 /* ---------- 小工具 ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -123,7 +123,7 @@ async function api(method, path, body) {
     r = await fetch(CFG.api + path, { method, headers: { Authorization: "Bearer " + t, ...(body !== undefined ? { "Content-Type": "application/json" } : {}) }, body: body !== undefined ? JSON.stringify(body) : undefined });
     j = await r.json();
   } catch { const e = new Error("net"); e.code = "net"; throw e; }
-  if (!r.ok || j.err) { const e = new Error(j.err || "server"); e.code = j.err || "server"; e.detail = j.detail; throw e; }
+  if (!r.ok || j.err) { const e = new Error(j.err || "server"); e.code = j.err || "server"; e.detail = j.detail; e.ref = j.ref; throw e; }
   return j;
 }
 const GET = (p) => api("GET", "/api/g" + p), POST = (p, b) => api("POST", "/api/g" + p, b || {});
@@ -165,7 +165,11 @@ function startIdle() {
 /* ---------- 外框與路由 ---------- */
 const go = (p) => { location.hash = "#" + p; };
 const TABS = [["/town", "", "地圖", "ic_home"], ["/practice", "", "練習", "ic_practice"], ["/duel", "", "對戰", "ic_duel"], ["/quests", "", "任務", "ic_quest"], ["/bag", "", "背包", "ic_bag"], ["/book", "", "圖鑑", "ic_book"]];
+<<<<<<< HEAD
 const lvBar = () => { const w = ME.wallet, st = ME.config.levelStep, base = (w.lv - 1) * st; return Math.max(0, Math.min(100, ((w.earned - base) / st) * 100)); };
+=======
+const lvBar = () => { const w = ME.wallet; if (w.nextAt == null) return 100; return Math.max(0, Math.min(100, ((w.earned - w.base) / Math.max(1, w.nextAt - w.base)) * 100)); };
+>>>>>>> a6e125a (更新數光島六年版)
 function chrome(active) {
   const w = ME.wallet, p = ME.player;
   $("#app").innerHTML = `<header class="top"><div class="who">${avatar(p && p.look)}<div class="nm">${esc(p ? p.nick : ME.user.name)}<small>${esc(ME.user.name)}・Lv ${w.lv}</small></div>
@@ -232,7 +236,11 @@ VIEWS.town = async () => {
       : `<a class="pin lock" style="left:${px}%;top:${py}%" href="javascript:void 0" data-act="hint" data-h="${esc(x.hint || "繼續冒險就會開放")}"><span class="dot">${uiIcon("ic_lock", "")}</span><span class="lbl">？？？</span></a>`;
   }).join("")}</div>`;
   bind(m, {
+<<<<<<< HEAD
     ck: async () => { const r = await POST("/checkin"); await refreshMe(); if (r.already) toast("今天已經簽到過囉!"); else { Snd.sfx("coin"); toast(`簽到成功!連續 ${r.streak} 天,+${r.reward} 結晶`); } await announce(r.unlocked); },
+=======
+    ck: async () => { const r = await POST("/checkin"); await refreshMe(); if (r.already) toast("今天已經簽到過囉!"); else { Snd.sfx("coin"); toast(`簽到成功!連續 ${r.streak} 天,+${r.reward} 結晶、+${r.dew || 0} 露水`); } await announce(r.unlocked); },
+>>>>>>> a6e125a (更新數光島六年版)
     hint: (b) => toast("" + b.dataset.h),
   });
   await announce(w.unlocked);
@@ -256,7 +264,11 @@ VIEWS.talk = async ([npcId]) => {
     await refreshMe();
     if (!r.node || (r.end && !r.node.text)) { await announce(r.unlocked); return go("/town"); }
     const n = r.node;
+<<<<<<< HEAD
     m.innerHTML = `<div class="card dlg"><div class="npcbox"><div class="av">${pic(r.npc.id, "")}</div><div class="name">${tx(r.npc.name)}</div></div><p class="say">${tx(n.text)}</p>
+=======
+    m.innerHTML = `<div class="card dlg"><div class="npcbox"><div class="av has"><span class="avs">${pic(r.npc.id, "")}</span></div><div class="name">${tx(r.npc.name)}</div></div><p class="say">${tx(n.text)}</p>
+>>>>>>> a6e125a (更新數光島六年版)
     ${n.choices.map((c) => `<button class="btn alt choice" data-act="pick" data-i="${c.i}">${tx(c.t)}</button>`).join("")}
     ${!n.choices.length ? `<button class="btn" data-act="${n.next ? "next" : "end"}">${n.next ? "繼續 ▶" : "好的!"}</button>` : ""}</div>`;
     bind(m, {
@@ -444,7 +456,11 @@ function choose(html, items) { // 選單視窗:回傳選到的 index 或 null
 VIEWS.farm = async () => {
   const m = chrome("/town"); const draw = async () => {
     const r = await GET("/farm");
+<<<<<<< HEAD
     m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">農場</h2><span class="tag">露水 ${r.dew}</span></div><p class="muted sm" style="color:#5a4328">作物沒澆水只是長得慢,不會枯死。</p>
+=======
+    m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">農場</h2><span class="tag">露水 ${r.dew}</span></div><p class="muted sm" style="color:#5a4328">作物沒澆水只是長得慢,不會枯死。${r.dew ? "" : "<br>露水用完了:答對題目、每日簽到都會得到露水。"}</p>
+>>>>>>> a6e125a (更新數光島六年版)
     <div class="grid">${r.slots.map((s) => s.crop ? `<div class="card slot"><span class="emo">${s.ready ? pic(`${s.crop}_3`, STAGE[3]) : pic(`${s.crop}_${s.stage}`, STAGE[s.stage])}</span><b>${tx(s.name)}</b><br><small class="muted">${s.ready ? "可以收成了!" : s.needsWater ? `需要澆水 ${s.waters}/${s.need}` : `還要約 ${s.minutesLeft} 分鐘`}</small>
       <div style="margin-top:8px">${s.ready ? `<button class="btn green sm" data-act="hv" data-s="${s.slot}">收成</button>` : s.needsWater ? `<button class="btn sm" data-act="wt" data-s="${s.slot}" ${r.dew ? "" : "disabled"}>澆水</button>` : `<small class="muted">長大中…</small>`}</div></div>`
       : `<div class="card slot"><span class="emo muted">${pic("plot_empty", "")}</span><small class="muted">空地</small><div style="margin-top:8px"><button class="btn alt sm" data-act="pl" data-s="${s.slot}">種植</button></div></div>`).join("")}</div>
@@ -491,7 +507,11 @@ VIEWS.shop = async () => {
     m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">叮噹百寶屋</h2><span class="tag">Lv ${r.lv}</span></div>
     <div class="seg pick">${cats.map((c) => `<button class="${c === SHOPCAT ? "on" : ""}" data-act="cat" data-c="${c}">${CATS[c] || c}</button>`).join("")}</div>
     <div class="grid">${r.items.filter((i) => i.cat === SHOPCAT).map((i) => `<div class="card slot ${i.locked ? "lock" : ""}"><span class="emo">${itemPic(i.id, "")}</span><b>${tx(i.name)}</b><br>
+<<<<<<< HEAD
       <small class="muted">${i.free ? "免費" : "<i class='gemi'></i> " + i.price}${i.maxOwn < 99 ? `・${i.owned}/${i.maxOwn}` : i.owned ? `・已有 ${i.owned}` : ""}</small>
+=======
+      <small class="muted">${i.free ? "免費" : "<i class='gemi'></i> " + (i.nextPrice || i.price)}${i.maxOwn < 99 ? `・${i.owned}/${i.maxOwn}` : i.owned ? `・已有 ${i.owned}` : ""}</small>
+>>>>>>> a6e125a (更新數光島六年版)
       <div style="margin-top:8px">${i.locked ? `<small class="muted">Lv ${i.minLv} 解鎖</small>` : i.free ? `<small class="muted">一開始就有</small>` : i.owned >= i.maxOwn ? `<small>已擁有</small>` : `<button class="btn sm" data-act="buy" data-id="${esc(i.id)}">購買</button>${i.maxOwn > 1 ? ` <button class="btn alt sm" data-act="buy" data-id="${esc(i.id)}" data-n="5">×5</button>` : ""}`}</div></div>`).join("")}</div>`;
     bind(m, {
       cat: (b) => { SHOPCAT = b.dataset.c; draw(); },
@@ -536,26 +556,56 @@ VIEWS.book = async () => {
   await draw();
 };
 
-/* ---------- 換造型・建立角色 ---------- */
+/* ---------- 換造型・建立角色(RPG 風格捏臉台)---------- */
 VIEWS.wardrobe = async ([mode]) => {
   const isNew = mode === "new"; const m = chrome(isNew ? "" : "/town");
   const shop = await GET("/shop"), cfg = ME.config, SL = cfg.slots, cur = ME.player;
-  const sel = { a: cur ? cur.nickA : 0, b: cur ? cur.nickB : 0, look: { ...(cur ? cur.look : {}) } };
-  const opts = (slot) => shop.items.filter((i) => i.cat === slot && (i.free || i.owned));
-  if (isNew) { for (const s of SL) { const o = opts(s)[0]; if (s !== "acc" && o && !sel.look[s]) sel.look[s] = o.id; } }
-  const draw = () => {
-    m.innerHTML = `<h2 class="ttl">${isNew ? "捏出你的角色" : "換造型"}</h2>${isNew ? `<p class="muted" style="color:#5a4328;font-weight:700">不分男生女生,選你喜歡的就好。之後還能在商店買更多造型。</p>` : ""}
-    <div class="card" style="text-align:center">${avatar(sel.look, "xl").replace('class="av xl"', 'class="av" style="width:110px;height:110px;margin:0 auto;font-size:60px"')}<h3>${esc(cfg.nickA[sel.a] + cfg.nickB[sel.b])}</h3></div>
-    <div class="card"><b>暱稱 前半</b><div class="pick" style="margin:6px 0">${cfg.nickA.map((n, i) => `<button class="${i === sel.a ? "on" : ""}" data-act="na" data-i="${i}">${esc(n)}</button>`).join("")}</div>
-    <b>暱稱 後半</b><div class="pick" style="margin:6px 0">${cfg.nickB.map((n, i) => `<button class="${i === sel.b ? "on" : ""}" data-act="nb" data-i="${i}">${esc(n)}</button>`).join("")}</div></div>
-    ${SL.map((s) => `<div class="card"><b>${CATS[s]}</b><div class="pick" style="margin-top:6px">${s === "acc" ? `<button class="${!sel.look.acc ? "on" : ""}" data-act="lk" data-s="acc" data-id="">不戴</button>` : ""}${opts(s).map((o) => `<button class="${sel.look[s] === o.id ? "on" : ""}" data-act="lk" data-s="${s}" data-id="${esc(o.id)}">${tx(o.name)}</button>`).join("")}</div></div>`).join("")}
-    <p><button class="btn green" data-act="save">${isNew ? "開始冒險!" : "儲存"}</button></p>`;
+  const sel = { a: cur ? cur.nickA : 0, b: cur ? cur.nickB : 0, look: { ...(cur ? cur.look : {}) }, tab: "hair" };
+  const all = (slot) => shop.items.filter((i) => i.cat === slot);
+  const usable = (i) => i.free || i.owned > 0;
+  const byId = (id) => shop.items.find((i) => i.id === id);
+  if (isNew) for (const s of SL) { const o = all(s).find(usable); if (s !== "acc" && o && !sel.look[s]) sel.look[s] = o.id; }
+  const TABS = [["hair", "髮型"], ["outfit", "服裝"], ["acc", "配件"], ["body", "體型"], ["nick", "稱號"]];
+  const stack = (look) => ["body", "hair", "outfit", "acc"].map((k) => look[k]).filter(Boolean).map((id) => pic(id, "", "lay")).join("");
+  const ZOOM = { hair: "transform:scale(2.1);transform-origin:50% 14%", outfit: "transform:scale(1.9);transform-origin:50% 88%", acc: "transform:scale(1.8);transform-origin:50% 50%", body: "transform:scale(1.15);transform-origin:50% 40%" };
+  const tile = (slot, i) => {
+    const look = slot === "body" ? { body: i.id } : { body: sel.look.body, [slot]: i.id };
+    const off = !usable(i), lk = i.locked;
+    return `<button class="tile ${sel.look[slot] === i.id ? "on" : ""} ${off ? "off" : ""}" data-act="pick" data-s="${slot}" data-id="${esc(i.id)}" aria-label="${esc(i.name)}">
+      <span class="th"><span class="ths" style="${ZOOM[slot]}">${stack(look)}</span></span>
+      <span class="tn">${tx(i.name)}</span>
+      <span class="tb">${usable(i) ? (sel.look[slot] === i.id ? "使用中" : "") : lk ? `${uiIcon("ic_lock", "")} Lv ${i.minLv}` : `<i class='gemi'></i> ${i.price}`}</span></button>`;
   };
-  draw();
+  const panel = () => {
+    if (sel.tab === "nick") return `<p class="muted sm">選兩個詞,組成你的稱號。</p><b>前半</b><div class="pick" style="margin:6px 0 10px">${cfg.nickA.map((n, i) => `<button class="${i === sel.a ? "on" : ""}" data-act="na" data-i="${i}">${esc(n)}</button>`).join("")}</div>
+      <b>後半</b><div class="pick" style="margin:6px 0">${cfg.nickB.map((n, i) => `<button class="${i === sel.b ? "on" : ""}" data-act="nb" data-i="${i}">${esc(n)}</button>`).join("")}</div>`;
+    const s = sel.tab;
+    return `<div class="tiles">${s === "acc" ? `<button class="tile ${!sel.look.acc ? "on" : ""}" data-act="pick" data-s="acc" data-id=""><span class="th"><span class="ths none">不戴</span></span><span class="tn">不戴配件</span><span class="tb">${!sel.look.acc ? "使用中" : ""}</span></button>` : ""}${all(s).map((i) => tile(s, i)).join("")}</div>`;
+  };
+  const need = () => SL.map((s) => byId(sel.look[s])).filter((i) => i && !usable(i));
+  const bar = () => {
+    const n = need(), one = n[0];
+    return `<div class="ccbar">${one ? `<span class="muted sm">${tx(one.name)}還沒擁有</span>${one.locked ? `<button class="btn alt" disabled>Lv ${one.minLv} 解鎖</button>` : `<button class="btn" data-act="buy" data-id="${esc(one.id)}">購買 <i class='gemi'></i> ${one.price}</button>`}` : ""}
+      <button class="btn green" data-act="save" ${n.length ? "disabled" : ""}>${isNew ? "開始冒險!" : "儲存"}</button></div>`;
+  };
+  const stage = () => `<div class="ccstage"><div class="ccglow"></div><div class="ccav"><div class="avs">${stack(sel.look)}</div></div><div class="ccplate">${esc(cfg.nickA[sel.a] + cfg.nickB[sel.b])}</div>
+    <div class="ccbtns"><button class="btn alt sm" data-act="rand">隨機</button>${isNew ? "" : `<button class="btn alt sm" data-act="reset">還原</button>`}</div></div>`;
+  const shell = () => {
+    m.innerHTML = `<h2 class="ttl">${isNew ? "捏出你的角色" : "換造型"}</h2>${isNew ? `<p class="muted" style="color:#5a4328;font-weight:700">不分男生女生,選你喜歡的就好。亮亮的是免費的,有價格的之後賺到結晶就能買。</p>` : ""}
+    <div class="cc"><div id="ccs">${stage()}</div><div class="ccpanel"><div class="cctabs seg pick" id="cct"></div><div id="ccp" class="ccgrid"></div><div id="ccb"></div></div></div>`;
+  };
+  const upTabs = () => { $("#cct").innerHTML = TABS.map(([k, n]) => `<button class="${k === sel.tab ? "on" : ""}" data-act="tab" data-t="${k}">${n}</button>`).join(""); };
+  const upAll = () => { $("#ccs").innerHTML = stage(); upTabs(); $("#ccp").innerHTML = panel(); $("#ccb").innerHTML = bar(); };
+  shell(); upAll();
+  const rnd = (a) => a[Math.floor(Math.random() * a.length)];
   bind(m, {
-    na: (b) => { sel.a = +b.dataset.i; draw(); }, nb: (b) => { sel.b = +b.dataset.i; draw(); },
-    lk: (b) => { if (b.dataset.id) sel.look[b.dataset.s] = b.dataset.id; else delete sel.look[b.dataset.s]; draw(); },
-    save: async () => { const r = await POST("/character", { nickA: sel.a, nickB: sel.b, look: sel.look }); ME.player = r.player; toast("儲存好了!"); go("/town"); },
+    tab: (b) => { sel.tab = b.dataset.t; upTabs(); $("#ccp").innerHTML = panel(); },
+    na: (b) => { sel.a = +b.dataset.i; upAll(); }, nb: (b) => { sel.b = +b.dataset.i; upAll(); },
+    pick: (b) => { if (b.dataset.id) sel.look[b.dataset.s] = b.dataset.id; else delete sel.look[b.dataset.s]; upAll(); },
+    rand: () => { for (const s of SL) { const o = all(s).filter(usable); if (s === "acc") { if (Math.random() < 0.5) delete sel.look.acc; else if (o.length) sel.look.acc = rnd(o).id; } else if (o.length) sel.look[s] = rnd(o).id; } sel.a = Math.floor(Math.random() * cfg.nickA.length); sel.b = Math.floor(Math.random() * cfg.nickB.length); Snd.sfx("ok"); upAll(); },
+    reset: () => { sel.look = { ...(cur ? cur.look : {}) }; sel.a = cur ? cur.nickA : 0; sel.b = cur ? cur.nickB : 0; upAll(); },
+    buy: async (b) => { if (ME.user.expired) return toast(ERR.expired); await POST("/buy", { item: b.dataset.id, qty: 1 }); Snd.sfx("coin"); toast("買好了!"); await refreshMe(); const it = byId(b.dataset.id); it.owned = 1; upAll(); },
+    save: async () => { const r = await POST("/character", { nickA: sel.a, nickB: sel.b, look: sel.look }); ME.player = r.player; Snd.sfx("ok"); toast("儲存好了!"); go("/town"); },
   });
 };
 

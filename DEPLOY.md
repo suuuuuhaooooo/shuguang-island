@@ -41,13 +41,16 @@ npx wrangler d1 execute math-class --remote --file=schema.sql
 # ② 起始商品與造型(重跑不會蓋掉你改過的)
 npx wrangler d1 execute math-class --remote --file=seed.sql
 
+# ②-2 六年份的商品目錄(20 種作物種子、9 種動物、造型、飼料;重跑安全)
+npx wrangler d1 execute math-class --remote --file=seed_catalog.sql
+
 # ③ 檢查 111 章章節總表有沒有匯入過
 npx wrangler d1 execute math-class --remote --command "SELECT COUNT(*) AS n FROM g_curriculum"
 #   n = 111 → 已完成,跳過。
 #   n = 0   → 要先匯入 data/curriculum.csv(見 README.md「匯入章節總表」);沒有這份就遊戲沒有題目範圍。
 
 # ④ 產生並匯入遊戲內容(地圖、NPC、對話、任務、成就、111 隻守護獸…)
-npm run content             # 看到「OK 220 筆」就對了
+npm run content             # 看到「OK 283 筆」就對了
 npx wrangler d1 execute math-class --remote --file=data/content.sql
 ```
 **④ 重跑是安全的**:同 id 的內容會被更新成這一版。
@@ -70,17 +73,19 @@ npx wrangler deploy
 - `art: true`、`audio: true` 保持。`video: false`(影片做好、放進 `assets/video/` 之後才改 `true`)。
 
 ### 2-2 蓋到你的前端 repo 並推上去
-假設你的 repo 資料夾叫 `shuguang-island-repo`(也就是你原本 `git add -A` 的那個):
+**「repo 根目錄」就是你放 `index.html` 的那個資料夾**(Codespaces 裡通常是 `/workspaces/shuguang-island`)。不要自己換新名字的資料夾。
+假設你已經把 `shuguang-island.zip` 放進 repo 根目錄並解壓縮(會多出一個 `shuguang-island/` 資料夾):
 ```bash
-# 解壓縮後,「把裡面那層 shuguang-island 的內容」複製進 repo 根目錄(注意最後的 /. )
-cp -r shuguang-island/. shuguang-island-repo/
-cd shuguang-island-repo
-ls                          # 根目錄必須直接看到 index.html 和 assets/,不能多一層 shuguang-island/
+cd /workspaces/shuguang-island        # 先確定在 repo 根目錄:ls 要看到 index.html、.git(ls -a)
+unzip -o shuguang-island.zip           # 解壓出 shuguang-island/
+cp -r shuguang-island/. .              # 把裡面的內容複製到「這裡」(注意結尾是 空格 + .)
+rm -rf shuguang-island shuguang-island.zip   # 刪掉解壓出來的暫存資料夾和 zip
+ls                                     # 必須直接看到 index.html、assets、DEPLOY.md,不能有 shuguang-island 資料夾
 git add -A
-git commit -m "數光島:老師後台、設定、響應式"
+git commit -m "數光島更新"
 git push
 ```
-> 上次網站沒變,就是因為多包了一層資料夾。`ls` 看到 `index.html` 才算對。
+> 不要把 zip 和解壓資料夾一起 commit。上次網站沒變、這次多出重複資料夾,都是因為檔案沒有直接放在根目錄。
 
 ### 2-3 GitHub Pages
 Repo → Settings → Pages → Source 選 `Deploy from a branch`、Branch `main`、資料夾 `/ (root)`。推上去後約 1–2 分鐘生效。
@@ -134,6 +139,13 @@ Firebase 控制台 → Authentication → Settings → Authorized domains → �
 | 前端程式 | `git push` |
 
 ---
+### 從舊版升級到「六年版」要多做的事
+1. 後端資料夾:`npm run content`,再執行 `seed_catalog.sql` 和 `data/content.sql` 兩個匯入(指令見 1-2 的 ②-2 與 ④),最後 `npx wrangler deploy`。
+2. 前端:把新的檔案覆蓋進前端 repo(含 `assets/art/` 新增的占位圖與 `tools/mkart.py`),commit、push。
+3. 等級算法改了(最高 60 級、越高越難升,`G_LEVEL_STEP` 預設改成 100):舊的測試帳號等級會依累積結晶重新計算,這是正常的。
+4. 想改作物、動物、造型、價格:改 `tools/catalog.mjs`(單一來源),再 `npm run content`、匯入 `seed_catalog.sql` 與 `data/content.sql`。後台「商店」分頁可直接調價格。
+5. 新圖片:畫好同名 `.webp` 放進 `assets/art/`(清單見 `ART_TODO_NEW.md`)。
+
 ## 6. 出問題怎麼辦
 | 症狀 | 原因 / 解法 |
 |---|---|
