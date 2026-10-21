@@ -52,7 +52,7 @@ export const Snd = {
     if (!S.sfx || !unlocked || !ac()) return; if (ctx.state === "suspended") ctx.resume();
     const t = ctx.currentTime + 0.01, v = 0.22 * S.sfxVol, d = master;
     const seq = (notes, type = "triangle", gap = 0.09, dur = 0.16, vol = v) => notes.forEach((n, i) => tone(n, t + i * gap, dur, type, vol, d));
-    ({
+    const synth = () => ({
       click: () => seq([660], "triangle", 0, 0.06, v * 0.7), open: () => seq([440, 660], "triangle", 0.06, 0.1),
       ok: () => seq([523, 659, 784], "triangle", 0.08, 0.18), no: () => seq([300, 240], "sawtooth", 0.1, 0.18, v * 0.5),
       coin: () => seq([988, 1319], "square", 0.07, 0.14, v * 0.5), levelup: () => seq([523, 659, 784, 1047, 1319], "triangle", 0.09, 0.22),
@@ -60,7 +60,7 @@ export const Snd = {
       win: () => seq([523, 659, 784, 659, 784, 1047], "triangle", 0.12, 0.28), lose: () => seq([392, 349, 311, 262], "triangle", 0.16, 0.3, v * 0.8),
       page: () => seq([880], "sine", 0, 0.05, v * 0.4),
     }[name] || (() => {}))();
-    if (window.SI_CONFIG && window.SI_CONFIG.audio) { try { const a = new Audio(`assets/audio/sfx_${name}.mp3`); a.volume = S.sfxVol; a.play().catch(() => {}); } catch {} }
+    if (window.SI_CONFIG && window.SI_CONFIG.audio) { try { const a = new Audio(`assets/audio/sfx_${name}.mp3`); a.volume = Math.min(1, S.sfxVol); a.addEventListener("error", synth); a.play().catch(synth); } catch { synth(); } } else synth();
   },
 };
 Settings.on((k) => { if (k === "bgm") { if (S.bgm) playScene(want || scene || "town"); else stopAll(); } if (k === "bgmVol" && el) el.volume = S.bgmVol; });

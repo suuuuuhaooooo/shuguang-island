@@ -313,3 +313,20 @@ details>summary{font-family:var(--serif)}
 
 .flagp{transform-box:fill-box;transform-origin:left center;animation:wavef 1.1s ease-in-out infinite alternate}@keyframes wavef{from{transform:scaleX(1) skewY(0)}to{transform:scaleX(.8) skewY(8deg)}}
 .swing{transform-box:fill-box;transform-origin:50% 0;animation:swingk 2.4s ease-in-out infinite}@keyframes swingk{50%{transform:rotate(8deg)}}
+
+/* ---- 老師後台 ---- */
+.notice{background:linear-gradient(#fff3c4,#ffe08a);font-weight:800}
+.adm h3{margin:0 0 8px}
+.adm-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:8px 0 12px}
+.adm-form label{display:flex;flex-direction:column;gap:4px;font-weight:800;font-size:.9rem}.adm-form label.wide{grid-column:1/-1}
+.adm input:not([type=range]):not([type=checkbox]),.adm select,.adm textarea{width:100%;padding:6px 10px;font:700 .95rem var(--sans);border-radius:8px;border:3px solid #6b4423;background:#fffaea;color:var(--ink);min-height:38px}
+.adm textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;margin:6px 0 10px;resize:vertical;-webkit-user-select:text;user-select:text}
+.adm td input:not([type=checkbox]),.adm td select{min-width:70px;padding:3px 6px;min-height:32px}
+.adm input[type=checkbox]{width:22px;height:22px}
+.adm .btn.sm,.adm .btn{min-height:38px;padding:3px 14px}
+.adm tr.off{opacity:.5}
+.adm-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:8px 0}
+.adm-kpi div{background:#fffaea;border:3px solid var(--edge);border-radius:12px;padding:8px;text-align:center}.adm-kpi b{display:block;font-size:1.6rem}.adm-kpi span{font-size:.8rem;color:var(--soft)}
+.adm-pre{white-space:pre-wrap;text-align:left;font-size:.85rem;max-height:40vh;overflow:auto;background:#fffaea;padding:8px;border-radius:8px}
+.adm .tbl{max-height:60vh;overflow:auto}
+.adm th{position:sticky;top:0;background:var(--paper)}

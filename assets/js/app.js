@@ -6,6 +6,7 @@ import { art, initArt, pic, uiIcon } from "./art.js";
 import { cpuSay } from "./cpu-lines.js";
 import { vec } from "./art-svg.js";
 import { worldScene, titleScene } from "./scenes.js";
+import { makeTeacher } from "./teacher.js";
 
 const CFG = window.SI_CONFIG || {};
 const DOMS = [["數與量", "🔢", "d0"], ["圖形與空間", "🔷", "d1"], ["測量", "📏", "d2"], ["統計與規律", "📊", "d3"], ["解題與關係", "🧩", "d4"]];
@@ -17,6 +18,7 @@ const semName = (s) => NUM[+s[0]] + (s[1] === "u" ? "上" : "下");
 const CPUN = ["", "見習夥伴", "進階夥伴", "達人夥伴"], CPUE = ["", "🐣", "🦊", "🐲"];
 const ERR = {
   net: "連不上伺服器,請檢查網路後再試一次。", server: "伺服器忙碌中,請稍後再試。", bad_token: "登入已失效,請重新登入。", no_token: "請先登入。",
+  duel_closed: "老師暫時關閉了對戰。", bad_setting: "沒有這個設定。", bad_value: "數值不在允許的範圍。", bad_roster: "名單資料格式不對。", confirm_mismatch: "確認的 Email 不一樣,沒有執行。", bad_amount: "顆數要是不為 0 的整數(整班最多 ±1000)。", no_student: "找不到這位學生。",
   not_in_roster: "這個帳號不在班級名單裡,請找老師。", expired: "你的使用期限到了,現在只能看,不能玩。請找老師。", forbidden: "這裡只有老師可以使用。",
   not_enough: "結晶不夠喔,再答幾題吧!", not_enough_item: "東西不夠。", limit: "已經擁有最多囉。", locked: "還沒解鎖,等級再高一點就可以了。", bad_request: "送出的資料不對,再試一次。",
   already_done: "這件事已經做過了。", occupied: "這裡已經有東西了。", not_ready: "還沒準備好,再等一下。", no_need: "不需要澆水了。", already_fed: "牠已經吃飽了。",
@@ -210,7 +212,7 @@ VIEWS.town = async () => {
   const m = chrome("/town"); m.innerHTML = `<p class="muted">載入中…</p>`;
   const [w, q] = await Promise.all([GET("/world"), GET("/quests")]); W = w; await refreshMe();
   const next = q.quests.filter((x) => x.status !== "done").sort((a, b) => (b.main - a.main) || (b.claimable - a.claimable))[0];
-  m.innerHTML = `${next ? `<div class="card"><span class="tag ${next.main ? "main" : ""}">${next.main ? "主線" : "任務"}</span> <b>${tx(next.title)}</b><br><span class="muted">${tx(next.text)}</span><div class="row sp" style="margin-top:8px"><small>${next.status === "available" ? "可以接任務" : `進度 ${next.progress.have}/${next.progress.need}`}</small><a class="btn sm" href="#/quests">${next.claimable ? "去領獎" : "看任務"}</a></div></div>` : ""}
+  m.innerHTML = `${ME.notice ? `<div class="card notice">📢 ${esc(ME.notice)}</div>` : ""}${next ? `<div class="card"><span class="tag ${next.main ? "main" : ""}">${next.main ? "主線" : "任務"}</span> <b>${tx(next.title)}</b><br><span class="muted">${tx(next.text)}</span><div class="row sp" style="margin-top:8px"><small>${next.status === "available" ? "可以接任務" : `進度 ${next.progress.have}/${next.progress.need}`}</small><a class="btn sm" href="#/quests">${next.claimable ? "去領獎" : "看任務"}</a></div></div>` : ""}
   <div class="row sp"><h2 class="ttl">數光島</h2><button class="btn blue sm" data-act="ck">📅 今日簽到</button></div>
   <div class="world">${worldScene()}${loopVid("world")}${w.maps.map((x, i) => {
     const [fx, fy] = fallbackXY(i, w.maps.length), px = typeof x.x === "number" ? x.x : fx, py = typeof x.y === "number" ? x.y : fy, n = x.unlocked ? x.quests.available + x.quests.active : 0;
@@ -313,6 +315,7 @@ VIEWS.duel = async () => {
   const m = chrome("/duel");
   const act = await GET("/duel/active");
   m.innerHTML = `<h2 class="ttl">⚔️ 數學對戰</h2>
+  ${ME.duelOpen === false ? `<div class="card err">老師暫時關閉了對戰,等開放後再來比賽吧!</div>` : ""}
   ${act.duel ? `<div class="card"><b>你有一場對戰還沒結束</b><div class="row" style="margin-top:8px"><a class="btn green" href="#/battle/${esc(act.duel.id)}">回到對戰</a><button class="btn alt sm" data-act="dc" data-id="${esc(act.duel.id)}">放棄這場</button></div></div>` : ""}
   <div class="card"><b>比賽規則</b><ul class="list"><li>每場 5 回合,雙方各 100 血。</li><li>同一題誰答對就能攻擊,<b>答得越快傷害越大</b>。</li><li>時間到沒答,算答錯。贏了有數光結晶,輸了也有安慰獎。</li></ul></div>
   <div class="card"><b>想比哪些領域?</b> <small class="muted">(最多選 2 個,不選就是隨機)</small><div class="pick" style="margin-top:8px">${DOMS.map(([n]) => `<button class="${DSEL.includes(n) ? "on" : ""}" data-act="dt" data-d="${esc(n)}">${n}</button>`).join("")}</div></div>
@@ -546,27 +549,12 @@ VIEWS.wardrobe = async ([mode]) => {
 };
 
 /* ---------- 老師 ---------- */
-let TTAB = "cov";
 VIEWS.teacher = async () => {
   if (ME.user.role !== "teacher") return go("/town");
-  const m = chrome("/teacher"); const draw = async () => {
-    const head = `<div class="seg pick">${[["cov", "題庫覆蓋"], ["prog", "班級進度"], ["stu", "學生總覽"]].map(([k, n]) => `<button class="${TTAB === k ? "on" : ""}" data-act="tab" data-k="${k}">${n}</button>`).join("")}</div>`;
-    let body = "";
-    if (TTAB === "cov") {
-      const r = await GET("/admin/coverage"), s = r.summary, lab = { none: "❌ 沒題", few: "⚠️ 太少", ok: "✅" };
-      body = `<div class="card"><p>共 ${s.chapters} 章:有題 ${s.ok} ・太少(<5) ${s.few} ・沒題 ${s.none}。題庫共 ${s.bankQuestions} 題。</p><div class="tbl"><table><tr><th>章</th><th>名稱</th><th>題庫</th><th>產生器</th><th>碰過人數</th><th></th></tr>${r.chapters.map((c) => `<tr><td>${esc(c.id)}</td><td>${esc(c.title)}</td><td>${c.bank}</td><td>${c.gens}</td><td>${c.students}</td><td>${lab[c.status]}</td></tr>`).join("")}</table></div></div>`;
-    } else if (TTAB === "prog") {
-      body = `<div class="card"><p class="muted">設定某班教到哪一學期,學生練習與對戰只會出到這個學期(含)之前。沒設定的班級,出題範圍是該年級的下學期。</p>
-      <p><input id="cls" placeholder="班級,例如 601"></p><p><select id="sem">${["1u", "1d", "2u", "2d", "3u", "3d", "4u", "4d", "5u", "5d", "6u", "6d"].map((s) => `<option value="${s}">${semName(s)}</option>`).join("")}</select></p><button class="btn" data-act="setp">儲存</button></div>`;
-    } else {
-      const r = await GET("/admin/overview");
-      body = `<div class="card"><div class="tbl"><table><tr><th>班</th><th>號</th><th>姓名</th><th>結晶</th><th>累計</th><th>答題</th><th>答對</th><th>章數</th></tr>${r.students.map((x) => `<tr><td>${esc(x.cls)}</td><td>${x.no}</td><td>${esc(x.name)}</td><td>${x.bal}</td><td>${x.earned}</td><td>${x.answered}</td><td>${x.correct}</td><td>${x.chapters}</td></tr>`).join("")}</table></div></div>`;
-    }
-    m.innerHTML = `<h2 class="ttl">老師</h2>${head}${body}`;
-    bind(m, { tab: (b) => { TTAB = b.dataset.k; draw(); }, setp: async () => { await POST("/admin/progress", { cls: $("#cls").value.trim(), semester: $("#sem").value }); toast("已儲存"); } });
-  };
-  await draw();
+  if (!teacherFn) teacherFn = makeTeacher({ GET, POST, chrome, bind, toast, modal, semName, go, errMsg });
+  await teacherFn();
 };
+let teacherFn = null;
 
 /* ---------- 啟動 ---------- */
 (async function main() {
