@@ -594,7 +594,7 @@ VIEWS.wardrobe = async ([mode]) => {
 /* ---------- 老師 ---------- */
 VIEWS.teacher = async () => {
   if (ME.user.role !== "teacher") return go("/town");
-  if (!teacherFn) teacherFn = makeTeacher({ GET, POST, chrome, bind, toast, modal, semName, go, errMsg });
+  if (!teacherFn) teacherFn = makeTeacher({ me: () => ME.user, GET, POST, chrome, bind, toast, modal, semName, go, errMsg });
   await teacherFn();
 };
 let teacherFn = null;

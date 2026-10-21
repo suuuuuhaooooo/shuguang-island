@@ -25,6 +25,7 @@ const TABS = [["ov", "總覽"], ["stu", "學生"], ["ros", "名單"], ["set", "�
 
 export function makeTeacher(H) {
   const { GET, POST, chrome, bind, toast, modal, semName, go, errMsg } = H;
+  const isAdmin = () => !!(H.me && H.me().admin);
   const S = { tab: "ov", cls: "", q: "", who: null, kind: "npc", edit: "", shopEdit: null };
   const detail = (e) => (e && e.detail ? (Array.isArray(e.detail) ? e.detail.join("\n") : String(e.detail)) : "");
   const fail = async (e) => { const d = detail(e); await modal(`<h3>${esc(errMsg(e))}</h3>${d ? `<pre class="adm-pre">${esc(d)}</pre>` : ""}`); };
@@ -57,7 +58,7 @@ export function makeTeacher(H) {
       const e = S.rosEdit || {};
       return `<div class="card adm"><h3>新增／修改一位</h3><p class="muted sm">Email 已存在就是修改。名單與「數學筆記本」共用,改這裡兩邊都會變。</p>
         <div class="adm-form"><label>Google Email<input id="re" value="${esc(e.email || "")}" placeholder="student@gmail.com"></label><label>班級<input id="rc" value="${esc(e.cls || S.cls || "")}" placeholder="601"></label><label>座號<input id="rn" type="number" value="${e.no ?? ""}"></label><label>姓名<input id="rm" value="${esc(e.name || "")}" maxlength="20"></label>
-          <label>年級<select id="rg">${[1, 2, 3, 4, 5, 6].map((g) => `<option value="${g}" ${(e.grade || 3) === g ? "selected" : ""}>${NUMS[g]}年級</option>`).join("")}</select></label><label>身分<select id="rr"><option value="student">學生</option><option value="teacher" ${e.role === "teacher" ? "selected" : ""}>老師</option></select></label><label>使用期限(留空=不限)<input id="rx" value="${esc(e.expires || "")}" placeholder="2027-01-31"></label></div>
+          <label>年級<select id="rg">${[1, 2, 3, 4, 5, 6].map((g) => `<option value="${g}" ${(e.grade || 3) === g ? "selected" : ""}>${NUMS[g]}年級</option>`).join("")}</select></label><label>身分<select id="rr"><option value="student">學生</option>${isAdmin() ? `<option value="teacher" ${e.role === "teacher" ? "selected" : ""}>老師</option><option value="admin" ${e.role === "admin" ? "selected" : ""}>管理員</option>` : ""}</select></label><label>使用期限(留空=不限)<input id="rx" value="${esc(e.expires || "")}" placeholder="2027-01-31"></label></div>
         <div class="row"><button class="btn" data-act="rsave">儲存</button><button class="btn alt" data-act="rclear">清空表單</button></div></div>
       <div class="card adm"><h3>一次匯入多位</h3><p class="muted sm">每行一位,欄位用逗號或 Tab 分開:<b>email,班級,座號,姓名,年級,期限(可省)</b>。可直接從試算表複製貼上。</p>
         <textarea id="rb" rows="5" placeholder="a@gmail.com,601,1,小明,3&#10;b@gmail.com,601,2,小華,3,2027-01-31"></textarea><button class="btn" data-act="rimport">匯入</button></div>
@@ -65,7 +66,7 @@ export function makeTeacher(H) {
         <div class="adm-form"><label>班級<select id="bc">${cl.map((c) => `<option>${esc(c)}</option>`).join("")}</select></label><label>年級<select id="bg"><option value="">不改</option><option value="+1">升一年級</option>${[1, 2, 3, 4, 5, 6].map((g) => `<option value="${g}">改成${NUMS[g]}年級</option>`).join("")}</select></label><label>使用期限<input id="bx" placeholder="不改請留空;清除請填 none"></label><label>狀態<select id="ba"><option value="">不改</option><option value="1">啟用</option><option value="0">整班停用</option></select></label></div>
         <button class="btn" data-act="rbulk">套用到整班</button></div>
       <div class="card adm"><div class="adm-form"><label>只看班級<select id="fc"><option value="">全部</option>${cl.map((c) => `<option ${c === S.cls ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label></div><div class="row"><button class="btn sm" data-act="filt">套用</button><button class="btn alt sm" data-act="csvRos">匯出名單 CSV</button></div>
-        <div class="tbl"><table><tr><th>班</th><th>號</th><th>姓名</th><th>Email</th><th>年級</th><th>身分</th><th>期限</th><th>狀態</th><th></th></tr>${show.map((x, i) => `<tr class="${x.active ? "" : "off"}"><td>${esc(x.cls)}</td><td>${x.no}</td><td>${esc(x.name)}</td><td class="sm">${esc(x.email)}</td><td>${x.grade}</td><td>${x.role === "teacher" ? "老師" : "學生"}</td><td>${esc(x.expires || "—")}</td><td>${x.active ? "啟用" : "停用"}</td><td><button class="btn sm" data-act="redit" data-e="${esc(x.email)}">編輯</button> <button class="btn alt sm" data-act="rtoggle" data-e="${esc(x.email)}">${x.active ? "停用" : "啟用"}</button></td></tr>`).join("")}</table></div></div>`;
+        <div class="tbl"><table><tr><th>班</th><th>號</th><th>姓名</th><th>Email</th><th>年級</th><th>身分</th><th>期限</th><th>狀態</th><th></th></tr>${show.map((x, i) => `<tr class="${x.active ? "" : "off"}"><td>${esc(x.cls)}</td><td>${x.no}</td><td>${esc(x.name)}</td><td class="sm">${esc(x.email)}</td><td>${x.grade}</td><td>${x.role === "admin" ? "管理員" : x.role === "teacher" ? "老師" : "學生"}</td><td>${esc(x.expires || "—")}</td><td>${x.active ? "啟用" : "停用"}</td><td><button class="btn sm" data-act="redit" data-e="${esc(x.email)}">編輯</button> <button class="btn alt sm" data-act="rtoggle" data-e="${esc(x.email)}">${x.active ? "停用" : "啟用"}</button></td></tr>`).join("")}</table></div></div>`;
     },
     async set() {
       const r = await GET("/admin/settings"), sp = r.spec, v = r.values;
@@ -76,7 +77,8 @@ export function makeTeacher(H) {
         return `<label>${esc(s.label)}<input id="${id}" type="number" min="${s.min}" max="${s.max}" value="${esc(v[k])}"></label>`; };
       const prog = Object.entries(r.progress);
       S._setKeys = Object.keys(sp);
-      return `<div class="card adm"><h3>獎勵與公告</h3><p class="muted sm">存檔後 10 秒內全部學生生效。</p><div class="adm-form">${Object.keys(sp).map(fld).join("")}</div><button class="btn" data-act="ssave">儲存設定</button></div>
+      const glob = r.admin ? `<div class="card adm"><h3>獎勵與公告</h3><p class="muted sm">存檔後 10 秒內全部學生生效。</p><div class="adm-form">${Object.keys(sp).map(fld).join("")}</div><button class="btn" data-act="ssave">儲存設定</button></div>` : `<div class="card"><p class="muted sm">獎勵與公告是全校共用,只有管理員能改。你可以設定自己班的教學進度。</p></div>`;
+      return glob + `
       <div class="card adm"><h3>各班教學進度</h3><p class="muted sm">學生練習與對戰只會出到這個學期(含)之前。沒設定的班級,出題範圍是該年級的下學期。</p>
         <div class="tbl"><table><tr><th>班</th><th>進度</th><th></th></tr>${prog.map(([c, s]) => `<tr><td>${esc(c)}</td><td>${semName(s)}</td><td><button class="btn alt sm" data-act="pdel" data-c="${esc(c)}">清除</button></td></tr>`).join("") || `<tr><td colspan="3" class="muted">尚未設定任何班級</td></tr>`}</table></div>
         <div class="adm-form"><label>班級<input id="cls" placeholder="601"></label><label>教到<select id="sem">${r.semesters.map((s) => `<option value="${s}">${semName(s)}</option>`).join("")}</select></label></div><button class="btn" data-act="setp">設定進度</button></div>`;
@@ -164,7 +166,9 @@ export function makeTeacher(H) {
     const m = chrome("/teacher");
     const draw = async () => {
       const keep = window.scrollY;
-      m.innerHTML = `<h2 class="ttl">老師後台</h2><div class="seg pick">${TABS.map(([k, n]) => `<button class="${S.tab === k ? "on" : ""}" data-act="tab" data-k="${k}">${n}</button>`).join("")}</div><div id="tb"><p class="muted">載入中…</p></div>`;
+      const tabs = TABS.filter(([k]) => isAdmin() || !["shop", "cont"].includes(k));
+      if (!tabs.some(([k]) => k === S.tab)) S.tab = "ov";
+      m.innerHTML = `<h2 class="ttl">${isAdmin() ? "管理員後台" : "老師後台"}</h2><div class="seg pick">${tabs.map(([k, n]) => `<button class="${S.tab === k ? "on" : ""}" data-act="tab" data-k="${k}">${n}</button>`).join("")}</div><div id="tb"><p class="muted">載入中…</p></div>`;
       try { $("#tb").innerHTML = await views[S.tab](); } catch (e) { $("#tb").innerHTML = `<div class="card"><p class="err">${esc(errMsg(e))}</p></div>`; }
       const ck = $("#ck"); if (ck) ck.onchange = () => { S.kind = ck.value; S.edit = ""; draw(); };
       window.scrollTo(0, keep);
