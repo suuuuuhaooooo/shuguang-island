@@ -1,0 +1,13 @@
+/* 數光島前端設定。api 是數光島 Worker 的網址；firebase 設定和數學筆記本共用同一個專案。 */
+window.SI_CONFIG = {
+  api: "https://shuguang-island-api.suuuuuhaooooo.workers.dev",
+  firebase: {
+    apiKey: "AIzaSyAw8FAsZkFl4bQFQCMCj7HY1bjeOS7XOmw",
+    authDomain: "math-illustration.firebaseapp.com",
+    projectId: "math-illustration",
+    appId: "1:189482002176:web:6c76c566eda2eea787b5e5"
+  },
+  /* 美術圖放進 assets/art/ 之後改成 true。檔名規則見 gemini-task-pack.md，例如 assets/art/npc_01.webp、item_carrot.webp、map_loc_01.webp。
+     還沒有圖的時候用表情符號占位。 */
+  art: false
+};
