@@ -97,7 +97,7 @@ export function makeTeacher(H) {
         <h3>編輯／匯入</h3><textarea id="ce" rows="9" spellcheck="false" placeholder='{"kind":"${S.kind}","id":"...", ...}'>${esc(S.edit)}</textarea><div class="row"><button class="btn" data-act="csave">儲存</button><button class="btn alt" data-act="cnew">填入空白範本</button></div></div>`;
     },
     async cov() {
-      const r = await GET("/admin/coverage"), s = r.summary, lab = { none: "❌ 沒題", few: "⚠️ 太少", ok: "✅" };
+      const r = await GET("/admin/coverage"), s = r.summary, lab = { none: "沒題", few: "太少", ok: "足夠" };
       return `<div class="card adm"><p>共 ${s.chapters} 章:有題 ${s.ok} ・太少(&lt;5) ${s.few} ・沒題 ${s.none}。題庫共 ${s.bankQuestions} 題。</p><button class="btn alt sm" data-act="csvCov">匯出 CSV</button><div class="tbl"><table><tr><th>章</th><th>名稱</th><th>題庫</th><th>產生器</th><th>碰過人數</th><th>答題</th><th>正確率</th><th></th></tr>${r.chapters.map((c) => `<tr><td>${esc(c.id)}</td><td>${esc(c.title)}</td><td>${c.bank}</td><td>${c.gens}</td><td>${c.students}</td><td>${c.answered}</td><td>${pct(c.correct, c.answered)}</td><td>${lab[c.status]}</td></tr>`).join("")}</table></div></div>`;
     },
   };

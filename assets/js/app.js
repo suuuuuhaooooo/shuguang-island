@@ -9,13 +9,24 @@ import { worldScene, titleScene } from "./scenes.js";
 import { makeTeacher } from "./teacher.js";
 
 const CFG = window.SI_CONFIG || {};
-const DOMS = [["數與量", "🔢", "d0"], ["圖形與空間", "🔷", "d1"], ["測量", "📏", "d2"], ["統計與規律", "📊", "d3"], ["解題與關係", "🧩", "d4"]];
-const MAPEMO = { town: "🏘️", shop: "🏪", farm: "🌾", pen: "🐑", work: "⚙️", tower: "🗼", nature: "🌲", sea: "🌊", other: "✨" };
+const DOMS = [["數與量", "d0i", "d0"], ["圖形與空間", "d1i", "d1"], ["測量", "d2i", "d2"], ["統計與規律", "d3i", "d3"], ["解題與關係", "d4i", "d4"]];
+
+/* 領域圖示(內建向量圖,取代表情符號) */
+const _sv = (b) => `<svg viewBox="0 0 48 48" width="46" height="46" fill="none" stroke="#3d2614" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${b}</svg>`;
+const DOMICON = {
+  d0i: _sv('<rect x="5" y="5" width="17" height="17" rx="4" fill="#F5A623"/><rect x="26" y="5" width="17" height="17" rx="4" fill="#FFE699"/><rect x="5" y="26" width="17" height="17" rx="4" fill="#FFE699"/><rect x="26" y="26" width="17" height="17" rx="4" fill="#F5A623"/><path d="M13.5 10v8M31 10l5 8M31 18l5-8" stroke-width="2"/>'),
+  d1i: _sv('<path d="M13 5 L25 25 H1 Z" fill="#27AE60" transform="translate(2 1)"/><circle cx="34" cy="14" r="9" fill="#8EE5FF"/><rect x="22" y="28" width="20" height="15" rx="2" fill="#FFE699"/><rect x="5" y="30" width="13" height="13" rx="2" fill="#F5A623"/>'),
+  d2i: _sv('<rect x="3" y="15" width="42" height="18" rx="3" fill="#8EE5FF" transform="rotate(-20 24 24)"/><g transform="rotate(-20 24 24)"><path d="M10 15v7M17 15v5M24 15v7M31 15v5M38 15v7"/></g>'),
+  d3i: _sv('<rect x="5" y="24" width="10" height="19" rx="2" fill="#9B51E0"/><rect x="19" y="10" width="10" height="33" rx="2" fill="#F5A623"/><rect x="33" y="30" width="10" height="13" rx="2" fill="#2D9CDB"/><path d="M3 45h42"/>'),
+  d4i: _sv('<path d="M8 12h12a4 4 0 1 1 8 0h12v10a4 4 0 1 0 0 8v12H28a4 4 0 1 0-8 0H8z" fill="#FF5E4D" transform="translate(0 -2)"/>'),
+  rand: _sv('<rect x="6" y="6" width="36" height="36" rx="8" fill="#FFF8E7"/><circle cx="16" cy="16" r="3" fill="#3d2614"/><circle cx="24" cy="24" r="3" fill="#3d2614"/><circle cx="32" cy="32" r="3" fill="#3d2614"/><circle cx="32" cy="16" r="3" fill="#3d2614"/><circle cx="16" cy="32" r="3" fill="#3d2614"/>'),
+};
+const MAPEMO = {};
 const CATS = { body: "體型", hair: "髮型", outfit: "服裝", acc: "配件", seed: "種子", feed: "飼料", animal: "動物", tool: "工具", deco: "裝飾" };
-const EMO = { carrot: "🥕", tomato: "🍅", wheat: "🌾", egg: "🥚", wool: "☁️", dew: "💧", star_flower: "🌸", seed_carrot: "🥕", seed_tomato: "🍅", seed_wheat: "🌾", seed_star: "🌸", feed_hay: "🌿", feed_grain: "🌾", animal_sheep: "🐑", animal_chicken: "🐥", plot_ext: "🟫", pen_ext: "🛖", crop_carrot: "🥕", crop_tomato: "🍅", crop_wheat: "🌾", crop_star: "🌸", an_sheep: "🐑", an_chicken: "🐥" };
+const EMO = {};
 const NUM = ["", "一", "二", "三", "四", "五", "六"];
 const semName = (s) => NUM[+s[0]] + (s[1] === "u" ? "上" : "下");
-const CPUN = ["", "見習夥伴", "進階夥伴", "達人夥伴"], CPUE = ["", "🐣", "🦊", "🐲"];
+const CPUN = ["", "見習夥伴", "進階夥伴", "達人夥伴"], CPUE = ["", "", "", ""];
 const ERR = {
   net: "連不上伺服器,請檢查網路後再試一次。", server: "伺服器忙碌中,請稍後再試。", bad_token: "登入已失效,請重新登入。", no_token: "請先登入。",
   duel_closed: "老師暫時關閉了對戰。", bad_setting: "沒有這個設定。", bad_value: "數值不在允許的範圍。", bad_roster: "名單資料格式不對。", confirm_mismatch: "確認的 Email 不一樣,沒有執行。", bad_amount: "顆數要是不為 0 的整數(整班最多 ±1000)。", no_student: "找不到這位學生。",
@@ -32,7 +43,7 @@ const errMsg = (e) => ERR[e && e.code] || ("出了點問題(" + ((e && e.code) |
 /* ---------- 小工具 ---------- */
 const $ = (s, r = document) => r.querySelector(s);
 const imgUrl = (p) => { const m = /^d:([0-9a-f]{16})$/.exec(p || ""); return m ? (ME && ME.config.imgBase || "") + "/api/img/" + m[1] : ""; };
-const emoOf = (id, fb) => EMO[id] || fb || "🎁";
+const emoOf = (id, fb) => EMO[id] || fb || "";
 const itemPic = (id, fb, cls) => pic(id, emoOf(id, fb), cls);
 function toast(msg) { const d = document.createElement("div"); d.className = "toast"; d.textContent = msg; $("#toasts").appendChild(d); setTimeout(() => d.remove(), 2800); }
 function modal(html, btns = ["好"]) {
@@ -51,7 +62,7 @@ const avatar = (look, cls = "") => {
   const ids = look ? ["body", "hair", "outfit", "acc"].map((k) => look[k]).filter(Boolean) : [];
   const layers = ids.map((id) => pic(id, "", "lay")).join("");
   const has = ids.length && (!art.on) && ids.some((id) => vec(id));
-  return `<div class="av ${cls} ${has ? "has" : ""}"><span class="avfb">🧒</span><div class="avs">${layers}</div></div>`;
+  return `<div class="av ${cls} ${has ? "has" : ""}"><span class="avfb"></span><div class="avs">${layers}</div></div>`;
 };
 
 /* ---------- 設定 ---------- */
@@ -68,7 +79,7 @@ async function settingsModal() {
   const S = () => Settings.all(), seg = (k, opts) => `<div class="pick">${opts.map(([v, n]) => `<button class="${S()[k] === v ? "on" : ""}" data-set="${k}" data-v="${v}">${n}</button>`).join("")}</div>`;
   const m = document.createElement("div"); m.className = "modal";
   const draw = () => {
-    m.innerHTML = `<div><h3>⚙️ 設定</h3>
+    m.innerHTML = `<div><h3>設定</h3>
     <div class="set"><span>背景音樂</span>${seg("bgm", [[true, "開"], [false, "關"]])}</div>
     <div class="set"><span>音量</span><input type="range" min="0" max="1" step="0.1" value="${S().bgmVol}" data-rng="bgmVol" aria-label="音樂音量" style="width:140px"></div>
     <div class="set"><span>音效</span>${seg("sfx", [[true, "開"], [false, "關"]])}</div>
@@ -78,7 +89,7 @@ async function settingsModal() {
     <div class="set"><span>特效游標</span>${seg("cursor", [[true, "開"], [false, "關"]])}</div>
     <div class="set"><span>動畫</span>${seg("motion", [[true, "開"], [false, "關"]])}</div>
     <p class="muted sm">注音「自動」:低年級自動顯示。音樂與設定只存在這台裝置。</p>
-    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn alt sm" data-x="ward">🧒 換造型</button><button class="btn alt sm" data-x="out">登出</button><button class="btn" data-x="ok">完成</button></div></div>`;
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn alt sm" data-x="ward">換造型</button><button class="btn alt sm" data-x="out">登出</button><button class="btn" data-x="ok">完成</button></div></div>`;
   };
   draw(); document.body.appendChild(m); Snd.sfx("open");
   m.onclick = (e) => {
@@ -134,7 +145,7 @@ async function boot() {
   route();
 }
 function loginErr(e) {
-  $("#app").innerHTML = `<div class="hero"><div class="big-ic">🔒</div><p class="err">${esc(errMsg(e))}</p><p><button class="btn alt" id="so">換個帳號登入</button> <button class="btn" id="rt">重試</button></p></div>${footHtml()}`;
+  $("#app").innerHTML = `<div class="hero"><div class="big-ic">${uiIcon("ic_lock", "")}</div><p class="err">${esc(errMsg(e))}</p><p><button class="btn alt" id="so">換個帳號登入</button> <button class="btn" id="rt">重試</button></p></div>${footHtml()}`;
   $("#so").onclick = () => auth.signOut(); $("#rt").onclick = () => boot();
 }
 
@@ -153,14 +164,14 @@ function startIdle() {
 
 /* ---------- 外框與路由 ---------- */
 const go = (p) => { location.hash = "#" + p; };
-const TABS = [["/town", "🗺️", "地圖", "ic_home"], ["/practice", "✏️", "練習", "ic_practice"], ["/duel", "⚔️", "對戰", "ic_duel"], ["/quests", "📜", "任務", "ic_quest"], ["/bag", "🎒", "背包", "ic_bag"], ["/book", "📖", "圖鑑", "ic_book"]];
+const TABS = [["/town", "", "地圖", "ic_home"], ["/practice", "", "練習", "ic_practice"], ["/duel", "", "對戰", "ic_duel"], ["/quests", "", "任務", "ic_quest"], ["/bag", "", "背包", "ic_bag"], ["/book", "", "圖鑑", "ic_book"]];
 const lvBar = () => { const w = ME.wallet, st = ME.config.levelStep, base = (w.lv - 1) * st; return Math.max(0, Math.min(100, ((w.earned - base) / st) * 100)); };
 function chrome(active) {
   const w = ME.wallet, p = ME.player;
   $("#app").innerHTML = `<header class="top"><div class="who">${avatar(p && p.look)}<div class="nm">${esc(p ? p.nick : ME.user.name)}<small>${esc(ME.user.name)}・Lv ${w.lv}</small></div>
-    <div class="pill" title="數光結晶">${uiIcon("ic_crystal", "💎")}<span class="gem">${w.bal}</span></div><button class="round" id="menu" aria-label="設定">${uiIcon("ic_settings", "⚙️")}</button></div><div class="bar"><i style="width:${lvBar()}%"></i></div></header>
+    <div class="pill" title="數光結晶">${uiIcon("ic_crystal", "")}<span class="gem">${w.bal}</span></div><button class="round" id="menu" aria-label="設定">${uiIcon("ic_settings", "")}</button></div><div class="bar"><i style="width:${lvBar()}%"></i></div></header>
     ${ME.user.expired ? `<div class="card err">你的使用期限到了,現在只能看,不能玩。</div>` : ""}<main id="main"></main>${footHtml()}
-    <nav class="dock">${TABS.concat(ME.user.role === "teacher" ? [["/teacher", "🧑‍🏫", "老師", "ic_teacher"]] : []).map(([h, e, n, ic]) => `<a href="#${h}" class="${active === h ? "on" : ""}"><b>${uiIcon(ic, e)}</b>${n}</a>`).join("")}</nav>`;
+    <nav class="dock">${TABS.concat(ME.user.role === "teacher" ? [["/teacher", "", "老師", "ic_teacher"]] : []).map(([h, e, n, ic]) => `<a href="#${h}" class="${active === h ? "on" : ""}"><b>${uiIcon(ic, e)}</b>${n}</a>`).join("")}</nav>`;
   $("#menu").onclick = settingsModal;
   mainEl = $("#main"); return mainEl;
 }
@@ -183,14 +194,14 @@ document.addEventListener("click", (e) => { if (e.target.closest(".btn,.opt,.doc
 /* 解鎖通知:新地點、成就、影片、新任務 */
 async function announce(u) {
   if (!u) return;
-  for (const m of u.maps || []) { Snd.sfx("levelup"); toast("🗺️ 發現新地點:" + m.name); }
-  for (const a of u.ach || []) { Snd.sfx("levelup"); await modal(`<div class="big-ic">🏅</div><h3>獲得成就</h3><p><b>${esc(a.name)}</b><br><span class="muted">${esc(a.desc || "")}</span></p>`); }
-  for (const v of u.videos || []) { const i = await modal(`<div class="big-ic">🎬</div><h3>解鎖新影片</h3><p>${esc(v.title)}</p>`, ["看影片", "之後再看"]); if (i === 0) await playVideo(v); }
+  for (const m of u.maps || []) { Snd.sfx("levelup"); toast("發現新地點:" + m.name); }
+  for (const a of u.ach || []) { Snd.sfx("levelup"); await modal(`<div class="big-ic">${uiIcon("ic_star", "")}</div><h3>獲得成就</h3><p><b>${esc(a.name)}</b><br><span class="muted">${esc(a.desc || "")}</span></p>`); }
+  for (const v of u.videos || []) { const i = await modal(`<div class="big-ic">${uiIcon("ic_quest", "")}</div><h3>解鎖新影片</h3><p>${esc(v.title)}</p>`, ["看影片", "之後再看"]); if (i === 0) await playVideo(v); }
   if ((u.quests || []).length) toast("有新任務囉!");
 }
 async function playVideo(v) {
   await modal(v.yt ? `<h3>${esc(v.title)}</h3><iframe src="https://www.youtube-nocookie.com/embed/${esc(v.yt)}?rel=0" allowfullscreen allow="autoplay; encrypted-media"></iframe>`
-    : `<div class="big-ic">🎬</div><h3>${esc(v.title)}</h3><p class="muted">影片製作中,敬請期待!</p>`, ["關閉"]);
+    : `<div class="big-ic">${uiIcon("ic_quest", "")}</div><h3>${esc(v.title)}</h3><p class="muted">影片製作中,敬請期待!</p>`, ["關閉"]);
 }
 const back = (to = "/town", n = "回地圖") => `<p><a href="#${to}" class="btn sm alt">← ${n}</a></p>`;
 
@@ -212,17 +223,17 @@ VIEWS.town = async () => {
   const m = chrome("/town"); m.innerHTML = `<p class="muted">載入中…</p>`;
   const [w, q] = await Promise.all([GET("/world"), GET("/quests")]); W = w; await refreshMe();
   const next = q.quests.filter((x) => x.status !== "done").sort((a, b) => (b.main - a.main) || (b.claimable - a.claimable))[0];
-  m.innerHTML = `${ME.notice ? `<div class="card notice">📢 ${esc(ME.notice)}</div>` : ""}${next ? `<div class="card"><span class="tag ${next.main ? "main" : ""}">${next.main ? "主線" : "任務"}</span> <b>${tx(next.title)}</b><br><span class="muted">${tx(next.text)}</span><div class="row sp" style="margin-top:8px"><small>${next.status === "available" ? "可以接任務" : `進度 ${next.progress.have}/${next.progress.need}`}</small><a class="btn sm" href="#/quests">${next.claimable ? "去領獎" : "看任務"}</a></div></div>` : ""}
-  <div class="row sp"><h2 class="ttl">數光島</h2><button class="btn blue sm" data-act="ck">📅 今日簽到</button></div>
+  m.innerHTML = `${ME.notice ? `<div class="card notice">${esc(ME.notice)}</div>` : ""}${next ? `<div class="card"><span class="tag ${next.main ? "main" : ""}">${next.main ? "主線" : "任務"}</span> <b>${tx(next.title)}</b><br><span class="muted">${tx(next.text)}</span><div class="row sp" style="margin-top:8px"><small>${next.status === "available" ? "可以接任務" : `進度 ${next.progress.have}/${next.progress.need}`}</small><a class="btn sm" href="#/quests">${next.claimable ? "去領獎" : "看任務"}</a></div></div>` : ""}
+  <div class="row sp"><h2 class="ttl">數光島</h2><button class="btn blue sm" data-act="ck">今日簽到</button></div>
   <div class="world">${worldScene()}${loopVid("world")}${w.maps.map((x, i) => {
     const [fx, fy] = fallbackXY(i, w.maps.length), px = typeof x.x === "number" ? x.x : fx, py = typeof x.y === "number" ? x.y : fy, n = x.unlocked ? x.quests.available + x.quests.active : 0;
     return x.unlocked
-      ? `<a class="pin" style="left:${px}%;top:${py}%" href="#/map/${esc(x.id)}">${n ? `<span class="bang">!</span>` : ""}<span class="dot">${pic("map_" + x.id, MAPEMO[x.kind] || "✨")}</span><span class="lbl">${esc(x.name)}</span></a>`
-      : `<a class="pin lock" style="left:${px}%;top:${py}%" href="javascript:void 0" data-act="hint" data-h="${esc(x.hint || "繼續冒險就會開放")}"><span class="dot">${uiIcon("ic_lock", "🔒")}</span><span class="lbl">？？？</span></a>`;
+      ? `<a class="pin" style="left:${px}%;top:${py}%" href="#/map/${esc(x.id)}">${n ? `<span class="bang">!</span>` : ""}<span class="dot">${pic("map_" + x.id, "")}</span><span class="lbl">${esc(x.name)}</span></a>`
+      : `<a class="pin lock" style="left:${px}%;top:${py}%" href="javascript:void 0" data-act="hint" data-h="${esc(x.hint || "繼續冒險就會開放")}"><span class="dot">${uiIcon("ic_lock", "")}</span><span class="lbl">？？？</span></a>`;
   }).join("")}</div>`;
   bind(m, {
-    ck: async () => { const r = await POST("/checkin"); await refreshMe(); if (r.already) toast("今天已經簽到過囉!"); else { Snd.sfx("coin"); toast(`簽到成功!連續 ${r.streak} 天,+${r.reward} 💎`); } await announce(r.unlocked); },
-    hint: (b) => toast("🔒 " + b.dataset.h),
+    ck: async () => { const r = await POST("/checkin"); await refreshMe(); if (r.already) toast("今天已經簽到過囉!"); else { Snd.sfx("coin"); toast(`簽到成功!連續 ${r.streak} 天,+${r.reward} 結晶`); } await announce(r.unlocked); },
+    hint: (b) => toast("" + b.dataset.h),
   });
   await announce(w.unlocked);
 };
@@ -230,10 +241,10 @@ VIEWS.town = async () => {
 VIEWS.map = async ([id]) => {
   const m = chrome("/town"); const w = W = await GET("/world"); const x = w.maps.find((k) => k.id === id);
   if (!x || !x.unlocked) { m.innerHTML = `<div class="card">這個地點還沒開放。</div>${back()}`; return; }
-  const acts = { shop: ["🏪 逛商店", "/shop"], farm: ["🌱 去田裡", "/farm"], pen: ["🐑 去畜欄", "/pens"] }[x.kind];
-  m.innerHTML = `${back()}<div class="card" style="text-align:center"><span class="emo">${pic("map_" + x.id, MAPEMO[x.kind] || "✨")}</span><h2>${tx(x.name)}</h2><p class="muted">${tx(x.desc || "")}</p>
-  ${acts ? `<a class="btn green" href="#${acts[1]}">${acts[0]}</a>` : ""} ${x.domains && x.domains.length ? `<button class="btn" data-act="pr">✏️ 在這裡練習${x.domains.map(esc).join("、")}</button>` : ""}</div>
-  <h3>這裡的朋友</h3><div class="grid">${x.npcs.map((n) => `<a class="card slot" style="text-decoration:none;color:inherit" href="#/talk/${esc(n.id)}"><span class="emo">${pic(n.id, "🧑")}</span><b>${tx(n.name)}</b><br><small class="muted">${tx(n.role || "")}</small></a>`).join("") || `<p class="muted">這裡暫時沒有人。</p>`}</div>`;
+  const acts = { shop: ["逛商店", "/shop"], farm: ["去田裡", "/farm"], pen: ["去畜欄", "/pens"] }[x.kind];
+  m.innerHTML = `${back()}<div class="card" style="text-align:center"><span class="emo">${pic("map_" + x.id, "")}</span><h2>${tx(x.name)}</h2><p class="muted">${tx(x.desc || "")}</p>
+  ${acts ? `<a class="btn green" href="#${acts[1]}">${acts[0]}</a>` : ""} ${x.domains && x.domains.length ? `<button class="btn" data-act="pr">在這裡練習${x.domains.map(esc).join("、")}</button>` : ""}</div>
+  <h3>這裡的朋友</h3><div class="grid">${x.npcs.map((n) => `<a class="card slot" style="text-decoration:none;color:inherit" href="#/talk/${esc(n.id)}"><span class="emo">${pic(n.id, "")}</span><b>${tx(n.name)}</b><br><small class="muted">${tx(n.role || "")}</small></a>`).join("") || `<p class="muted">這裡暫時沒有人。</p>`}</div>`;
   bind(m, { pr: () => startQuiz(x.domains) });
 };
 
@@ -245,7 +256,7 @@ VIEWS.talk = async ([npcId]) => {
     await refreshMe();
     if (!r.node || (r.end && !r.node.text)) { await announce(r.unlocked); return go("/town"); }
     const n = r.node;
-    m.innerHTML = `<div class="card dlg"><div class="npcbox"><div class="av">${pic(r.npc.id, "🧑")}</div><div class="name">${tx(r.npc.name)}</div></div><p class="say">${tx(n.text)}</p>
+    m.innerHTML = `<div class="card dlg"><div class="npcbox"><div class="av">${pic(r.npc.id, "")}</div><div class="name">${tx(r.npc.name)}</div></div><p class="say">${tx(n.text)}</p>
     ${n.choices.map((c) => `<button class="btn alt choice" data-act="pick" data-i="${c.i}">${tx(c.t)}</button>`).join("")}
     ${!n.choices.length ? `<button class="btn" data-act="${n.next ? "next" : "end"}">${n.next ? "繼續 ▶" : "好的!"}</button>` : ""}</div>`;
     bind(m, {
@@ -262,7 +273,7 @@ VIEWS.talk = async ([npcId]) => {
 VIEWS.practice = async () => {
   const m = chrome("/practice");
   m.innerHTML = `<h2 class="ttl">今天想練什麼?</h2><p class="muted" style="color:#5a4328;font-weight:700">每答對一題就會得到數光結晶。答錯也沒關係,看看解答再試試。</p>
-  <div class="grid">${DOMS.map(([n, e, c]) => `<button class="dom ${c}" data-act="go" data-d="${esc(n)}"><b>${e}</b>${n}</button>`).join("")}<button class="dom" style="border-color:#aaa" data-act="go" data-d="*"><b>🎲</b>隨機</button></div>`;
+  <div class="grid">${DOMS.map(([n, e, c]) => `<button class="dom ${c}" data-act="go" data-d="${esc(n)}"><b>${DOMICON[e]}</b>${n}</button>`).join("")}<button class="dom" style="border-color:#aaa" data-act="go" data-d="*"><b>${DOMICON.rand}</b>隨機</button></div>`;
   bind(m, { go: (b) => startQuiz(b.dataset.d === "*" ? [] : [b.dataset.d]) });
 };
 async function startQuiz(domains) {
@@ -278,7 +289,7 @@ VIEWS.quiz = async () => {
   const q = QZ.qs[QZ.i], n = QZ.qs.length;
   if (!q) {
     Snd.bgm("win");
-    m.innerHTML = `<div class="card result"><div class="big">🎉</div><h2>練習完成!</h2><p>答對 <b>${QZ.right}</b> / ${n} 題<br>這次得到 <b>💎 ${QZ.gain}</b></p><button class="btn" data-act="again">再練一次</button> <a class="btn alt" href="#/town">回地圖</a></div>`;
+    m.innerHTML = `<div class="card result"><div class="big">${uiIcon("ic_star", "")}</div><h2>練習完成!</h2><p>答對 <b>${QZ.right}</b> / ${n} 題<br>這次得到 <b><i class='gemi'></i> ${QZ.gain}</b></p><button class="btn" data-act="again">再練一次</button> <a class="btn alt" href="#/town">回地圖</a></div>`;
     const dm = QZ.domains; bind(m, { again: () => startQuiz(dm) }); await refreshMe(); return;
   }
   let sel = null, done = false;
@@ -288,7 +299,7 @@ VIEWS.quiz = async () => {
     : `<input id="ans" ${q.t === "text" ? "" : 'inputmode="decimal"'} autocomplete="off" placeholder="${q.t === "text" ? "寫下答案" : "輸入數字"}">`}
   <p><button class="btn" data-act="ok" id="okb" ${q.o ? "disabled" : ""}>送出答案</button></p><div id="fb"></div></div>`;
   const okb = $("#okb"), inp = $("#ans");
-  if (inp) { inp.focus(); inp.onkeydown = (e) => e.key === "Enter" && okb.click(); }
+  if (inp) { inp.focus(); inp.onkeydown = (e) => { if (e.key === "Enter") okb.click(); }; }
   bind(m, {
     opt: (b) => { if (done) return; sel = b.dataset.v; m.querySelectorAll(".opt").forEach((x) => x.classList.toggle("on", x === b)); okb.disabled = false; },
     ok: async () => {
@@ -297,11 +308,11 @@ VIEWS.quiz = async () => {
       Snd.sfx(r.correct ? "ok" : "no");
       if (q.o) m.querySelectorAll(".opt").forEach((x) => { if (x.dataset.v === v) x.classList.add(r.correct ? "ok" : "no"); if (!r.correct && x.dataset.v === String(r.a)) x.classList.add("ok"); });
       if (r.correct) QZ.right++; QZ.gain += r.reward || 0; QZ.st[QZ.i] = r.correct ? "ok" : "no";
-      $("#fb").innerHTML = `<div class="fb ${r.correct ? "ok" : "no"}"><b>${r.correct ? "答對了!" : "再想想,沒關係~"}</b> ${r.reward ? `<span class="tag">+${r.reward} 💎${r.rewardKind === "comfort" ? "(安慰獎)" : ""}</span>` : ""}
+      $("#fb").innerHTML = `<div class="fb ${r.correct ? "ok" : "no"}"><b>${r.correct ? "答對了!" : "再想想,沒關係~"}</b> ${r.reward ? `<span class="tag">+${r.reward} <i class='gemi'></i>${r.rewardKind === "comfort" ? "(安慰獎)" : ""}</span>` : ""}
       ${r.capped ? `<br><small>今天的結晶已經拿滿囉,明天再來!</small>` : ""}${r.correct ? "" : `<br>答案是 <b>${tx(r.a)}</b>。${tx(r.h || "")}${r.diag ? `<br><b>${tx(r.diag)}</b>` : ""}${r.himg ? `<img class="qimg" src="${esc(imgUrl(r.himg))}" alt="">` : ""}`}</div>
       <p><button class="btn" data-act="next">${QZ.i + 1 < n ? "下一題 ▶" : "看結果"}</button></p>`;
       okb.hidden = true; await refreshMe();
-      if (r.levelUp) { Snd.sfx("levelup"); toast(`升級了!現在是 Lv ${r.lv ?? ME.wallet.lv} 🎉`); }
+      if (r.levelUp) { Snd.sfx("levelup"); toast(`升級了!現在是 Lv ${r.lv ?? ME.wallet.lv} `); }
       if (r.coll) toast("收進圖鑑一隻守護獸!");
       await announce(r.unlocked);
     },
@@ -314,14 +325,14 @@ let DSEL = [];
 VIEWS.duel = async () => {
   const m = chrome("/duel");
   const act = await GET("/duel/active");
-  m.innerHTML = `<h2 class="ttl">⚔️ 數學對戰</h2>
+  m.innerHTML = `<h2 class="ttl">數學對戰</h2>
   ${ME.duelOpen === false ? `<div class="card err">老師暫時關閉了對戰,等開放後再來比賽吧!</div>` : ""}
   ${act.duel ? `<div class="card"><b>你有一場對戰還沒結束</b><div class="row" style="margin-top:8px"><a class="btn green" href="#/battle/${esc(act.duel.id)}">回到對戰</a><button class="btn alt sm" data-act="dc" data-id="${esc(act.duel.id)}">放棄這場</button></div></div>` : ""}
   <div class="card"><b>比賽規則</b><ul class="list"><li>每場 5 回合,雙方各 100 血。</li><li>同一題誰答對就能攻擊,<b>答得越快傷害越大</b>。</li><li>時間到沒答,算答錯。贏了有數光結晶,輸了也有安慰獎。</li></ul></div>
   <div class="card"><b>想比哪些領域?</b> <small class="muted">(最多選 2 個,不選就是隨機)</small><div class="pick" style="margin-top:8px">${DOMS.map(([n]) => `<button class="${DSEL.includes(n) ? "on" : ""}" data-act="dt" data-d="${esc(n)}">${n}</button>`).join("")}</div></div>
   <h3>和電腦夥伴比賽</h3><div class="grid">${[1, 2, 3].map((l) => `<div class="card slot"><span class="emo">${pic("cpu_" + l, CPUE[l])}</span><b>${CPUN[l]}</b><div style="margin-top:8px"><button class="btn sm" data-act="cpu" data-l="${l}">挑戰!</button></div></div>`).join("")}</div>
   <h3>和同班同學比賽</h3><div class="card"><p class="muted sm" style="margin-top:0">一個人開房間,把 4 碼代碼告訴同班同學,對方輸入就開打。</p>
-  <button class="btn blue" data-act="mk">🏠 開一個房間</button>
+  <button class="btn blue" data-act="mk">開一個房間</button>
   <div class="row" style="margin-top:12px"><input id="rc" maxlength="4" placeholder="輸入 4 碼代碼" style="max-width:190px;text-transform:uppercase" autocomplete="off"><button class="btn green" data-act="jn">加入</button></div></div>`;
   bind(m, {
     dt: (b) => { const d = b.dataset.d; DSEL = DSEL.includes(d) ? DSEL.filter((x) => x !== d) : DSEL.concat(d).slice(-2); route(); },
@@ -337,7 +348,7 @@ VIEWS.battle = async ([id]) => {
   let st = null, sig = "", dead = false, sending = false, lastLog = 0, deadline = 0, startAt = 0, busyF = false;
   onLeave(() => { dead = true; });
   const sigOf = (r) => [r.status, r.round, r.startsIn > 0, r.answered, r.you.hp, r.foe.hp, r.log.length, r.result].join("|");
-  const foeAv = (r) => (r.foe.cpu ? `<div class="av">${pic("cpu_" + r.foe.cpu, CPUE[r.foe.cpu])}</div>` : `<div class="av"><span class="avfb">🧒</span></div>`);
+  const foeAv = (r) => (r.foe.cpu ? `<div class="av has"><span class="avs">${pic("cpu_" + r.foe.cpu, "")}</span></div>` : `<div class="av has"><span class="avs">${vec("npc_01") ? `<span class="vecw">${vec("npc_01")}</span>` : ""}</span></div>`);
   const fighters = (r) => `<div class="fighters"><div class="fighter" id="fy">${avatar(ME.player && ME.player.look)}<b>${esc(r.you.nick)}</b><div class="hp me"><i style="width:${r.you.hp}%"></i></div><small>${r.you.hp} / 100</small></div><div class="vs">VS</div>
     <div class="fighter" id="ff">${foeAv(r)}<b>${esc(r.foe.nick)}</b><div class="hp"><i style="width:${r.foe.hp}%"></i></div><small>${r.foe.hp} / 100</small></div></div>`;
   function render(r) {
@@ -350,8 +361,8 @@ VIEWS.battle = async ([id]) => {
     const intermission = r.startsIn > 0, last = r.log[r.log.length - 1];
     let body;
     if (intermission) {
-      body = `<div class="qcard" style="text-align:center">${last ? `<div>${last.you ? "✅ 你答對了" : "❌ 你沒答對"}${last.youDmg ? `,對手 -${last.youDmg}` : ""}　${last.foe ? "對手答對了" : "對手沒答對"}${last.foeDmg ? `,你 -${last.foeDmg}` : ""}<br><small class="muted">上一題答案:${tx(last.a)}</small></div>` : ""}
-      ${r.foe.cpu ? `<div class="bannerx" style="color:#fff">💬 ${esc(r.foe.nick)}:${esc(last ? cpuSay(r.foe.cpu, last.foe ? "right" : "wrong", r.round) : cpuSay(r.foe.cpu, "open", ME.wallet.earned))}</div>` : ""}<h3 style="margin:.6em 0 0">第 ${r.round + 1} 回合 <span class="hl">準備!</span></h3><div class="big" id="cd">${Math.ceil(r.startsIn / 1000)}</div></div>`;
+      body = `<div class="qcard" style="text-align:center">${last ? `<div>${last.you ? "<b class=\"okc\">✓</b> 你答對了" : "<b class=\"nok\">✗</b> 你沒答對"}${last.youDmg ? `,對手 -${last.youDmg}` : ""}　${last.foe ? "對手答對了" : "對手沒答對"}${last.foeDmg ? `,你 -${last.foeDmg}` : ""}<br><small class="muted">上一題答案:${tx(last.a)}</small></div>` : ""}
+      ${r.foe.cpu ? `<div class="bannerx" style="color:#fff">${esc(r.foe.nick)}:${esc(last ? cpuSay(r.foe.cpu, last.foe ? "right" : "wrong", r.round) : cpuSay(r.foe.cpu, "open", ME.wallet.earned))}</div>` : ""}<h3 style="margin:.6em 0 0">第 ${r.round + 1} 回合 <span class="hl">準備!</span></h3><div class="big" id="cd">${Math.ceil(r.startsIn / 1000)}</div></div>`;
     } else if (r.answered) {
       body = `<div class="qcard" style="text-align:center"><h3>已送出!</h3><p class="muted" id="foeS">${r.foeAnswered ? "對手也答好了,結算中…" : "等對手作答…"}</p></div>`;
     } else {
@@ -359,18 +370,18 @@ VIEWS.battle = async ([id]) => {
       body = `<div class="qcard"><small class="muted">第 ${r.round + 1} / ${r.total} 回合</small><div class="q">${tx(q.q)}</div>${q.img ? `<img class="qimg" alt="附圖" src="${esc(imgUrl(q.img))}">` : ""}
       ${q.o ? `<div class="opts">${q.o.map((o, i) => `<button class="opt" data-act="bo" data-v="${esc(o)}"><b>${"ABCDEFGH"[i]}</b>${tx(o)}</button>`).join("")}</div>`
         : `<input id="ans" ${q.t === "text" ? "" : 'inputmode="decimal"'} autocomplete="off" placeholder="${q.t === "text" ? "寫下答案" : "輸入數字"}"><p><button class="btn" data-act="bs">送出</button></p>`}
-      <small class="muted" id="foeS">${r.foeAnswered ? "⚡ 對手已經答好了!" : ""}</small></div>`;
+      <small class="muted" id="foeS">${r.foeAnswered ? "對手已經答好了!" : ""}</small></div>`;
     }
     m.innerHTML = `<div class="arena" style="position:relative">${loopVid("battle")}${fighters(r)}<div class="timer"><i id="tm"></i></div>${body}</div>`;
-    const inp = $("#ans"); if (inp) { inp.focus(); inp.onkeydown = (e) => e.key === "Enter" && submit(inp.value.trim()); }
+    const inp = $("#ans"); if (inp) { inp.focus(); inp.onkeydown = (e) => { if (e.key === "Enter") submit(inp.value.trim()); }; }
     bind(m, { bo: (b) => { m.querySelectorAll(".opt").forEach((x) => x.classList.toggle("on", x === b)); return submit(b.dataset.v); }, bs: () => submit(($("#ans").value || "").trim()) });
   }
   function renderDone(r) {
     const win = r.result === "win", rw = r.reward || {};
     Snd.sfx(win ? "win" : r.result === "draw" ? "ok" : "lose"); if (win) Snd.bgm("win");
-    m.innerHTML = `<div class="arena">${fighters(r)}<div class="qcard result"><div class="big">${win ? "🏆" : r.result === "draw" ? "🤝" : "💪"}</div><h2>${win ? "你贏了!" : r.result === "draw" ? "平手!" : "下次一定贏!"}</h2>
-      ${r.foe.cpu ? `<div class="bannerx" style="color:#fff">💬 ${esc(r.foe.nick)}:${esc(cpuSay(r.foe.cpu, win ? "lose" : r.result === "draw" ? "win" : "win", r.log.length))}</div>` : ""}<p>${rw.give ? `獲得 <b>💎 ${rw.give}</b>` : "今天的對戰結晶已經拿滿囉"}${rw.capped && rw.give ? `(今天快到上限了)` : ""}</p>
-      <div class="tbl"><table><tr><th>回合</th><th>答案</th><th>你</th><th>對手</th></tr>${r.log.map((x) => `<tr><td>${x.r + 1}</td><td>${tx(x.a)}</td><td>${x.you ? "✅" + (x.youDmg ? " -" + x.youDmg : "") : "❌"}</td><td>${x.foe ? "✅" + (x.foeDmg ? " -" + x.foeDmg : "") : "❌"}</td></tr>`).join("")}</table></div>
+    m.innerHTML = `<div class="arena">${fighters(r)}<div class="qcard result"><div class="big">${uiIcon(win ? "ic_star" : r.result === "draw" ? "ic_check" : "ic_heart", "")}</div><h2>${win ? "你贏了!" : r.result === "draw" ? "平手!" : "下次一定贏!"}</h2>
+      ${r.foe.cpu ? `<div class="bannerx" style="color:#fff">${esc(r.foe.nick)}:${esc(cpuSay(r.foe.cpu, win ? "lose" : r.result === "draw" ? "win" : "win", r.log.length))}</div>` : ""}<p>${rw.give ? `獲得 <b><i class='gemi'></i> ${rw.give}</b>` : "今天的對戰結晶已經拿滿囉"}${rw.capped && rw.give ? `(今天快到上限了)` : ""}</p>
+      <div class="tbl"><table><tr><th>回合</th><th>答案</th><th>你</th><th>對手</th></tr>${r.log.map((x) => `<tr><td>${x.r + 1}</td><td>${tx(x.a)}</td><td>${x.you ? "<b class=\"okc\">✓</b>" + (x.youDmg ? " -" + x.youDmg : "") : "<b class=\"nok\">✗</b>"}</td><td>${x.foe ? "<b class=\"okc\">✓</b>" + (x.foeDmg ? " -" + x.foeDmg : "") : "<b class=\"nok\">✗</b>"}</td></tr>`).join("")}</table></div>
       <p><a class="btn" href="#/duel">再比一場</a> <a class="btn alt" href="#/town">回地圖</a></p></div></div>`;
     dead = true; refreshMe().catch(() => {});
   }
@@ -385,7 +396,7 @@ VIEWS.battle = async ([id]) => {
   function apply(r) {
     const ns = sigOf(r), now = performance.now(); deadline = now + r.msLeft; startAt = now + r.startsIn;
     const prev = st; st = r;
-    if (ns !== sig) { sig = ns; render(r); effects(r); } else if (prev && r.foeAnswered !== prev.foeAnswered) { const e = $("#foeS"); if (e) e.textContent = r.answered ? "對手也答好了,結算中…" : "⚡ 對手已經答好了!"; }
+    if (ns !== sig) { sig = ns; render(r); effects(r); } else if (prev && r.foeAnswered !== prev.foeAnswered) { const e = $("#foeS"); if (e) e.textContent = r.answered ? "對手也答好了,結算中…" : "對手已經答好了!"; }
   }
   async function fetchState() { if (busyF || dead) return; busyF = true; try { apply(await GET("/duel/state?id=" + encodeURIComponent(id))); } catch (e) { if (e.code === "no_duel") { dead = true; m.innerHTML = `<div class="card"><p class="err">${esc(errMsg(e))}</p><a class="btn" href="#/duel">回對戰大廳</a></div>`; } } finally { busyF = false; } }
   async function submit(v) {
@@ -412,18 +423,18 @@ VIEWS.quests = async () => {
   const m = chrome("/quests"); const [r, w] = await Promise.all([GET("/quests"), W ? W : GET("/world")]); W = w;
   const mapName = (id) => { const x = w.maps.find((k) => k.id === id); return x && x.unlocked ? x.name : ""; };
   const list = r.quests.filter((x) => x.status !== "done"), done = r.quests.filter((x) => x.status === "done");
-  const card = (x) => `<div class="card"><div class="row sp"><div><span class="tag ${x.main ? "main" : ""}">${x.main ? "主線 第" + x.act + "幕" : "支線"}</span> <b>${tx(x.title)}</b></div>${mapName(x.map) ? `<small class="muted">📍${esc(mapName(x.map))}</small>` : ""}</div>
+  const card = (x) => `<div class="card"><div class="row sp"><div><span class="tag ${x.main ? "main" : ""}">${x.main ? "主線 第" + x.act + "幕" : "支線"}</span> <b>${tx(x.title)}</b></div>${mapName(x.map) ? `<small class="muted">${esc(mapName(x.map))}</small>` : ""}</div>
     <p class="muted" style="margin:.4em 0">${tx(x.text)}</p><div class="row sp">${x.status === "active" ? `<small>進度 ${x.progress.have} / ${x.progress.need}</small>` : "<span></span>"}
-    ${x.status === "available" ? `<button class="btn sm" data-act="acc" data-id="${esc(x.id)}">接任務</button>` : x.status === "active" ? `<button class="btn green sm" data-act="clm" data-id="${esc(x.id)}" ${x.claimable ? "" : "disabled"}>領獎勵</button>` : `<small>✅ 完成</small>`}</div></div>`;
+    ${x.status === "available" ? `<button class="btn sm" data-act="acc" data-id="${esc(x.id)}">接任務</button>` : x.status === "active" ? `<button class="btn green sm" data-act="clm" data-id="${esc(x.id)}" ${x.claimable ? "" : "disabled"}>領獎勵</button>` : `<small>完成</small>`}</div></div>`;
   m.innerHTML = `<h2 class="ttl">任務板</h2>${list.map(card).join("") || `<div class="card"><p class="muted">目前沒有任務,去地圖逛逛吧!</p></div>`}${done.length ? `<details><summary class="muted" style="color:#5a4328;font-weight:800">已完成 ${done.length} 個</summary>${done.map(card).join("")}</details>` : ""}`;
   bind(m, {
     acc: async (b) => { const r2 = await POST("/quest/accept", { id: b.dataset.id }); toast("開始任務!"); await announce(r2.unlocked); route(); },
-    clm: async (b) => { const r2 = await POST("/quest/claim", { id: b.dataset.id }); const c = (r2.rewards || []).filter((x) => x.crystal).reduce((s, x) => s + x.crystal, 0); Snd.sfx("coin"); toast("任務完成!" + (c ? ` +${c} 💎` : "")); await refreshMe(); if (r2.levelUp) { Snd.sfx("levelup"); toast("升級了!🎉"); } await announce(r2.unlocked); route(); },
+    clm: async (b) => { const r2 = await POST("/quest/claim", { id: b.dataset.id }); const c = (r2.rewards || []).filter((x) => x.crystal).reduce((s, x) => s + x.crystal, 0); Snd.sfx("coin"); toast("任務完成!" + (c ? ` +${c} 結晶` : "")); await refreshMe(); if (r2.levelUp) { Snd.sfx("levelup"); toast("升級了!"); } await announce(r2.unlocked); route(); },
   });
 };
 
 /* ---------- 農場 ---------- */
-const STAGE = ["🌱", "🌿", "🌾", "🎉"];
+const STAGE = ["", "", "", ""];
 function choose(html, items) { // 選單視窗:回傳選到的 index 或 null
   return new Promise((res) => {
     const mo = document.createElement("div"); mo.className = "modal"; mo.innerHTML = `<div>${html}${items}<button class="btn alt" data-i="x">取消</button></div>`; document.body.appendChild(mo);
@@ -433,17 +444,17 @@ function choose(html, items) { // 選單視窗:回傳選到的 index 或 null
 VIEWS.farm = async () => {
   const m = chrome("/town"); const draw = async () => {
     const r = await GET("/farm");
-    m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">🌾 農場</h2><span class="tag">💧 露水 ${r.dew}</span></div><p class="muted sm" style="color:#5a4328">作物沒澆水只是長得慢,不會枯死。</p>
+    m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">農場</h2><span class="tag">露水 ${r.dew}</span></div><p class="muted sm" style="color:#5a4328">作物沒澆水只是長得慢,不會枯死。</p>
     <div class="grid">${r.slots.map((s) => s.crop ? `<div class="card slot"><span class="emo">${s.ready ? pic(`${s.crop}_3`, STAGE[3]) : pic(`${s.crop}_${s.stage}`, STAGE[s.stage])}</span><b>${tx(s.name)}</b><br><small class="muted">${s.ready ? "可以收成了!" : s.needsWater ? `需要澆水 ${s.waters}/${s.need}` : `還要約 ${s.minutesLeft} 分鐘`}</small>
-      <div style="margin-top:8px">${s.ready ? `<button class="btn green sm" data-act="hv" data-s="${s.slot}">收成</button>` : s.needsWater ? `<button class="btn sm" data-act="wt" data-s="${s.slot}" ${r.dew ? "" : "disabled"}>💧澆水</button>` : `<small class="muted">長大中…</small>`}</div></div>`
-      : `<div class="card slot"><span class="emo muted">${pic("plot_empty", "🟫")}</span><small class="muted">空地</small><div style="margin-top:8px"><button class="btn alt sm" data-act="pl" data-s="${s.slot}">種植</button></div></div>`).join("")}</div>
-    <p class="muted sm" style="color:#5a4328">想要更多田地或露水,到商店買。</p><a class="btn alt" href="#/shop">🏪 去商店</a>`;
+      <div style="margin-top:8px">${s.ready ? `<button class="btn green sm" data-act="hv" data-s="${s.slot}">收成</button>` : s.needsWater ? `<button class="btn sm" data-act="wt" data-s="${s.slot}" ${r.dew ? "" : "disabled"}>澆水</button>` : `<small class="muted">長大中…</small>`}</div></div>`
+      : `<div class="card slot"><span class="emo muted">${pic("plot_empty", "")}</span><small class="muted">空地</small><div style="margin-top:8px"><button class="btn alt sm" data-act="pl" data-s="${s.slot}">種植</button></div></div>`).join("")}</div>
+    <p class="muted sm" style="color:#5a4328">想要更多田地或露水,到商店買。</p><a class="btn alt" href="#/shop">去商店</a>`;
     bind(m, {
       pl: async (b) => {
-        const i = await choose("<h3>要種什麼?</h3>", r.crops.map((c, k) => `<button class="btn alt choice" data-i="${k}" ${c.locked || !c.seeds ? "disabled" : ""}>${pic(c.id + "_3", "🌱", "sm")} ${tx(c.name)}<small class="muted">　種子 ${c.seeds}${c.locked ? `・Lv ${c.min_lv} 解鎖` : ""}</small></button>`).join(""));
+        const i = await choose("<h3>要種什麼?</h3>", r.crops.map((c, k) => `<button class="btn alt choice" data-i="${k}" ${c.locked || !c.seeds ? "disabled" : ""}>${pic(c.id + "_3", "", "sm")} ${tx(c.name)}<small class="muted">　種子 ${c.seeds}${c.locked ? `・Lv ${c.min_lv} 解鎖` : ""}</small></button>`).join(""));
         if (i === null) return; await POST("/farm/plant", { crop: r.crops[i].id, slot: +b.dataset.s }); toast("種下去了!"); await draw();
       },
-      wt: async (b) => { await POST("/farm/water", { slot: +b.dataset.s }); toast("💧 澆水完成"); await draw(); },
+      wt: async (b) => { await POST("/farm/water", { slot: +b.dataset.s }); toast("澆水完成"); await draw(); },
       hv: async (b) => { const x = await POST("/farm/harvest", { slot: +b.dataset.s }); Snd.sfx("coin"); toast(`收成!${x.got.qty} 個 ${EMO[x.got.item] || ""}`); await draw(); await refreshMe(); await announce(x.unlocked); },
     });
   };
@@ -454,14 +465,14 @@ VIEWS.farm = async () => {
 VIEWS.pens = async () => {
   const m = chrome("/town"); const draw = async () => {
     const r = await GET("/pens");
-    m.innerHTML = `${back()}<h2 class="ttl">🐑 牧場</h2><p class="muted sm" style="color:#5a4328">動物肚子餓只會打哈欠,餵飽牠們就會送你禮物。</p>
-    <div class="grid">${r.slots.map((s) => s.animal ? `<div class="card slot"><span class="emo">${pic(s.animal, "🐾")}</span><b>${tx(s.name)}</b><br><small class="muted">${s.ready ? "有禮物可以收!" : s.hungry ? "肚子餓了 🥱" : `還要約 ${s.minutesLeft} 分鐘`}</small>
-      <div style="margin-top:8px">${s.ready ? `<button class="btn green sm" data-act="cl" data-s="${s.slot}">收取</button>` : s.hungry ? `<button class="btn sm" data-act="fd" data-s="${s.slot}">餵食</button>` : `<small class="muted">吃飽了 😊</small>`}</div></div>`
-      : `<div class="card slot"><span class="emo muted">${pic("pen_empty", "🛖")}</span><small class="muted">空的畜欄</small><div style="margin-top:8px"><button class="btn alt sm" data-act="pl" data-s="${s.slot}">放動物</button></div></div>`).join("")}</div>
-    <p class="muted sm" style="color:#5a4328">動物和飼料都在商店買。</p><a class="btn alt" href="#/shop">🏪 去商店</a>`;
+    m.innerHTML = `${back()}<h2 class="ttl">牧場</h2><p class="muted sm" style="color:#5a4328">動物肚子餓只會打哈欠,餵飽牠們就會送你禮物。</p>
+    <div class="grid">${r.slots.map((s) => s.animal ? `<div class="card slot"><span class="emo">${pic(s.animal, "")}</span><b>${tx(s.name)}</b><br><small class="muted">${s.ready ? "有禮物可以收!" : s.hungry ? "肚子餓了 " : `還要約 ${s.minutesLeft} 分鐘`}</small>
+      <div style="margin-top:8px">${s.ready ? `<button class="btn green sm" data-act="cl" data-s="${s.slot}">收取</button>` : s.hungry ? `<button class="btn sm" data-act="fd" data-s="${s.slot}">餵食</button>` : `<small class="muted">吃飽了 </small>`}</div></div>`
+      : `<div class="card slot"><span class="emo muted">${pic("pen_empty", "")}</span><small class="muted">空的畜欄</small><div style="margin-top:8px"><button class="btn alt sm" data-act="pl" data-s="${s.slot}">放動物</button></div></div>`).join("")}</div>
+    <p class="muted sm" style="color:#5a4328">動物和飼料都在商店買。</p><a class="btn alt" href="#/shop">去商店</a>`;
     bind(m, {
       pl: async (b) => {
-        const i = await choose("<h3>放哪一隻?</h3>", r.animals.map((a, k) => `<button class="btn alt choice" data-i="${k}" ${a.locked || !a.owned ? "disabled" : ""}>${pic(a.id, "🐾", "sm")} ${tx(a.name)}<small class="muted">　擁有 ${a.owned}${a.locked ? `・Lv ${a.min_lv} 解鎖` : ""}</small></button>`).join(""));
+        const i = await choose("<h3>放哪一隻?</h3>", r.animals.map((a, k) => `<button class="btn alt choice" data-i="${k}" ${a.locked || !a.owned ? "disabled" : ""}>${pic(a.id, "", "sm")} ${tx(a.name)}<small class="muted">　擁有 ${a.owned}${a.locked ? `・Lv ${a.min_lv} 解鎖` : ""}</small></button>`).join(""));
         if (i === null) return; await POST("/pens/place", { animal: r.animals[i].id, slot: +b.dataset.s }); toast("牠住進來了!"); await draw();
       },
       fd: async (b) => { await POST("/pens/feed", { slot: +b.dataset.s }); toast("吃得好開心!"); await draw(); },
@@ -477,11 +488,11 @@ VIEWS.shop = async () => {
   const m = chrome("/town"); const draw = async () => {
     const r = await GET("/shop"), cats = [...new Set(r.items.map((i) => i.cat))].sort((a, b) => Object.keys(CATS).indexOf(a) - Object.keys(CATS).indexOf(b));
     if (!cats.includes(SHOPCAT)) SHOPCAT = cats[0];
-    m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">🏪 叮噹百寶屋</h2><span class="tag">Lv ${r.lv}</span></div>
+    m.innerHTML = `${back()}<div class="row sp"><h2 class="ttl">叮噹百寶屋</h2><span class="tag">Lv ${r.lv}</span></div>
     <div class="seg pick">${cats.map((c) => `<button class="${c === SHOPCAT ? "on" : ""}" data-act="cat" data-c="${c}">${CATS[c] || c}</button>`).join("")}</div>
-    <div class="grid">${r.items.filter((i) => i.cat === SHOPCAT).map((i) => `<div class="card slot ${i.locked ? "lock" : ""}"><span class="emo">${itemPic(i.id, "🎁")}</span><b>${tx(i.name)}</b><br>
-      <small class="muted">${i.free ? "免費" : "💎 " + i.price}${i.maxOwn < 99 ? `・${i.owned}/${i.maxOwn}` : i.owned ? `・已有 ${i.owned}` : ""}</small>
-      <div style="margin-top:8px">${i.locked ? `<small class="muted">Lv ${i.minLv} 解鎖</small>` : i.free ? `<small class="muted">一開始就有</small>` : i.owned >= i.maxOwn ? `<small>✅ 已擁有</small>` : `<button class="btn sm" data-act="buy" data-id="${esc(i.id)}">購買</button>${i.maxOwn > 1 ? ` <button class="btn alt sm" data-act="buy" data-id="${esc(i.id)}" data-n="5">×5</button>` : ""}`}</div></div>`).join("")}</div>`;
+    <div class="grid">${r.items.filter((i) => i.cat === SHOPCAT).map((i) => `<div class="card slot ${i.locked ? "lock" : ""}"><span class="emo">${itemPic(i.id, "")}</span><b>${tx(i.name)}</b><br>
+      <small class="muted">${i.free ? "免費" : "<i class='gemi'></i> " + i.price}${i.maxOwn < 99 ? `・${i.owned}/${i.maxOwn}` : i.owned ? `・已有 ${i.owned}` : ""}</small>
+      <div style="margin-top:8px">${i.locked ? `<small class="muted">Lv ${i.minLv} 解鎖</small>` : i.free ? `<small class="muted">一開始就有</small>` : i.owned >= i.maxOwn ? `<small>已擁有</small>` : `<button class="btn sm" data-act="buy" data-id="${esc(i.id)}">購買</button>${i.maxOwn > 1 ? ` <button class="btn alt sm" data-act="buy" data-id="${esc(i.id)}" data-n="5">×5</button>` : ""}`}</div></div>`).join("")}</div>`;
     bind(m, {
       cat: (b) => { SHOPCAT = b.dataset.c; draw(); },
       buy: async (b) => { if (ME.user.expired) return toast(ERR.expired); const n = +(b.dataset.n || 1); await POST("/buy", { item: b.dataset.id, qty: n }); Snd.sfx("coin"); toast("買好了!"); await refreshMe(); await draw(); },
@@ -494,8 +505,8 @@ VIEWS.shop = async () => {
 VIEWS.bag = async () => {
   const m = chrome("/bag"); const draw = async () => {
     const r = await GET("/bag");
-    m.innerHTML = `<h2 class="ttl">🎒 背包</h2>${r.items.length ? `<div class="grid">${r.items.map((i) => `<div class="card slot"><span class="emo">${itemPic(i.id, "🎁")}</span><b>${tx(i.name)}</b><br><small class="muted">× ${i.qty}</small>${i.sell > 0 ? `<div style="margin-top:8px"><button class="btn alt sm" data-act="sell" data-id="${esc(i.id)}" data-n="1">賣1個 💎${i.sell}</button>${i.qty > 1 ? ` <button class="btn alt sm" data-act="sell" data-id="${esc(i.id)}" data-n="${i.qty}">全賣</button>` : ""}</div>` : ""}</div>`).join("")}</div>` : `<div class="card"><p class="muted">背包是空的。去商店逛逛,或到農場收成吧!</p></div>`}`;
-    bind(m, { sell: async (b) => { const x = await POST("/sell", { item: b.dataset.id, qty: +b.dataset.n }); Snd.sfx("coin"); toast(`賣出!+${x.got} 💎`); await refreshMe(); await announce(x.unlocked); await draw(); } });
+    m.innerHTML = `<h2 class="ttl">背包</h2>${r.items.length ? `<div class="grid">${r.items.map((i) => `<div class="card slot"><span class="emo">${itemPic(i.id, "")}</span><b>${tx(i.name)}</b><br><small class="muted">× ${i.qty}</small>${i.sell > 0 ? `<div style="margin-top:8px"><button class="btn alt sm" data-act="sell" data-id="${esc(i.id)}" data-n="1">賣1個 <i class='gemi'></i>${i.sell}</button>${i.qty > 1 ? ` <button class="btn alt sm" data-act="sell" data-id="${esc(i.id)}" data-n="${i.qty}">全賣</button>` : ""}</div>` : ""}</div>`).join("")}</div>` : `<div class="card"><p class="muted">背包是空的。去商店逛逛,或到農場收成吧!</p></div>`}`;
+    bind(m, { sell: async (b) => { const x = await POST("/sell", { item: b.dataset.id, qty: +b.dataset.n }); Snd.sfx("coin"); toast(`賣出!+${x.got} 結晶`); await refreshMe(); await announce(x.unlocked); await draw(); } });
   };
   await draw();
 };
@@ -510,16 +521,16 @@ VIEWS.book = async () => {
       const r = await GET("/collection"), by = {};
       r.chapters.forEach((c) => (by[c.semester] = by[c.semester] || []).push(c));
       body = `<div class="card"><p class="muted" style="margin:0">已收集 <b>${r.collected}</b> / ${r.total} 隻・目前有題目的章節 ${r.playable} 個。每章答對 ${ME.config.collAt} 題,守護獸就會加入圖鑑。</p></div>` +
-        Object.keys(by).map((s) => `<details class="card" ${by[s].some((c) => c.playable) ? "open" : ""}><summary><b>${semName(s)}</b>　<small class="muted">${by[s].filter((c) => c.collected).length}/${by[s].length}</small></summary><div class="grid" style="margin:8px 0">${by[s].map((c) => `<div class="tile ${c.collected ? "on" : !c.playable ? "off" : ""}"><span class="emo">${c.collected ? pic("coll_" + c.id, "🐾") : c.playable ? "❔" : "🔒"}</span><b>${c.collected ? tx(c.name) : "？？？"}</b><br><small class="muted">${tx(c.title)}<br>${c.playable ? `${Math.min(c.correct, c.need)}/${c.need}` : "題目準備中"}</small></div>`).join("")}</div></details>`).join("");
+        Object.keys(by).map((s) => `<details class="card" ${by[s].some((c) => c.playable) ? "open" : ""}><summary><b>${semName(s)}</b>　<small class="muted">${by[s].filter((c) => c.collected).length}/${by[s].length}</small></summary><div class="grid" style="margin:8px 0">${by[s].map((c) => `<div class="tile ${c.collected ? "on" : !c.playable ? "off" : ""}"><span class="emo">${c.collected ? pic("coll_" + c.id, "") : c.playable ? "" : ""}</span><b>${c.collected ? tx(c.name) : "？？？"}</b><br><small class="muted">${tx(c.title)}<br>${c.playable ? `${Math.min(c.correct, c.need)}/${c.need}` : "題目準備中"}</small></div>`).join("")}</div></details>`).join("");
     } else if (BOOKTAB === "ach") {
       const r = await GET("/achievements");
-      body = `<div class="grid">${r.list.map((a) => `<div class="tile ${a.owned ? "on" : "off"}"><span class="emo">${a.owned ? pic(a.id, "🏅") : "🔒"}</span><b>${tx(a.name)}</b><br><small class="muted">${tx(a.desc || "")}</small></div>`).join("")}</div>`;
+      body = `<div class="grid">${r.list.map((a) => `<div class="tile ${a.owned ? "on" : "off"}"><span class="emo">${a.owned ? pic(a.id, "") : ""}</span><b>${tx(a.name)}</b><br><small class="muted">${tx(a.desc || "")}</small></div>`).join("")}</div>`;
     } else {
       const r = await GET("/videos");
-      body = r.list.length ? r.list.map((v) => `<div class="card row sp"><div><b>🎬 ${tx(v.title)}</b><br><small class="muted">${tx(v.desc || "")}</small></div><button class="btn sm" data-act="pv" data-id="${esc(v.id)}">播放</button></div>`).join("") : `<div class="card"><p class="muted">解鎖的影片會收在這裡。</p></div>`;
+      body = r.list.length ? r.list.map((v) => `<div class="card row sp"><div><b>${tx(v.title)}</b><br><small class="muted">${tx(v.desc || "")}</small></div><button class="btn sm" data-act="pv" data-id="${esc(v.id)}">播放</button></div>`).join("") : `<div class="card"><p class="muted">解鎖的影片會收在這裡。</p></div>`;
       VIDS = r.list;
     }
-    m.innerHTML = `<h2 class="ttl">📖 圖鑑</h2>${head}${body}`;
+    m.innerHTML = `<h2 class="ttl">圖鑑</h2>${head}${body}`;
     bind(m, { tab: (b) => { BOOKTAB = b.dataset.k; draw(); }, pv: (b) => playVideo(VIDS.find((v) => v.id === b.dataset.id)) });
   };
   await draw();

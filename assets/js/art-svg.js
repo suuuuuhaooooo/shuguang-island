@@ -95,7 +95,7 @@ const hay = () => svg(`<ellipse cx="50" cy="52" rx="32" ry="30" ${o("#d9b24a")}/
 const dew = () => svg(`<path d="M50 14 q28 34 22 52 q-4 20-22 20 t-22-20 q-6-18 22-52z" ${o("#7ad0ff")}/>${shine(40, 56, 5, 11, 20)}${star(76, 26, 5, "#fff6a8")}`);
 const sign = (inner) => svg(`<rect x="46" y="48" width="8" height="44" ${o("#8a5a2b")}/><rect x="16" y="22" width="68" height="32" rx="8" ${o("#e9c07a")}/>${inner}`);
 const medal = (ch) => svg(`<path d="M30 6 l20 30 l20-30z" ${o("#d6453d")}/><circle cx="50" cy="60" r="32" ${o("#ffc300")}/><circle cx="50" cy="60" r="25" fill="#ffe27a" stroke="${INK}" stroke-width="2.4"/>${shine(38, 44, 9, 5)}<text x="50" y="70" font-size="26" text-anchor="middle">${ch}</text>`);
-const ACH = { ach_first_answer: "✨", ach_ten: "💡", ach_hundred: "🌟", ach_first_harvest: "🥕", ach_farmer: "🌾", ach_rancher: "🐑", ach_streak3: "📅", ach_all_domains: "🌈", ach_secret: "🗝️", ach_duel1: "⚔️", ach_duel5: "🏅", ach_master: "👑" };
+const ACH = { ach_first_answer: "★", ach_ten: "★", ach_hundred: "★", ach_first_harvest: "★", ach_farmer: "★", ach_rancher: "★", ach_streak3: "★", ach_all_domains: "★", ach_secret: "★", ach_duel1: "★", ach_duel5: "★", ach_master: "★" };
 
 /* ---------- 玩家分身圖層(100×100,同一座標系疊在一起)---------- */
 const SKIN = { body_1: "#ffd9b8", body_2: "#e9b48a", body_3: "#a9714b" };
@@ -122,7 +122,7 @@ const items = {
   seed_carrot: () => bag("#ff8a1f", `<path d="M44 52 l12 0 l-6 14z" fill="#ff8a1f" stroke="${INK}" stroke-width="1.6"/>`), seed_tomato: () => bag("#e5393b", `<circle cx="50" cy="59" r="7" fill="#e5393b" stroke="${INK}" stroke-width="1.6"/>`),
   seed_wheat: () => bag("#d9b24a", `<path d="M50 70 v-18 M50 56 l-5-5 M50 56 l5-5" stroke="#a8802a" stroke-width="2.4" fill="none"/>`), seed_star: () => bag("#9d4edd", star(50, 59, 8)),
   feed_hay: hay, feed_grain: () => svg(`<path d="M28 30 q22-12 44 0 l6 58 q-28 10-56 0z" ${o("#e9c07a")}/><path d="M30 28 q20-14 40 0 q-20 6-40 0z" ${o("#c9a050")}/>${[0, 1, 2].map((i) => `<ellipse cx="${40 + i * 10}" cy="62" rx="3" ry="5.4" ${o("#ffd23f")}/>`).join("")}`),
-  dew, plot_ext: () => sign(`<path d="M24 46 h52" stroke="#6fae5a" stroke-width="5"/><text x="50" y="40" font-size="18" text-anchor="middle">🟫</text>`), pen_ext: () => sign(`<text x="50" y="42" font-size="18" text-anchor="middle">🛖</text>`),
+  dew, plot_ext: () => sign(`<path d="M24 46 h52" stroke="#6fae5a" stroke-width="5"/><text x="50" y="40" font-size="18" text-anchor="middle">★</text>`), pen_ext: () => sign(`<text x="50" y="42" font-size="18" text-anchor="middle">★</text>`),
   animal_sheep: sheep, animal_chicken: chicken, an_sheep: sheep, an_chicken: chicken,
   plot_empty: () => svg(`<rect x="10" y="40" width="80" height="44" rx="8" ${o("#a8703a")}/><path d="M20 52 h60 M20 62 h60 M20 72 h60" stroke="#8a5a2b" stroke-width="3" opacity=".6"/>${shine(30, 48, 10, 3, 0)}`),
   pen_empty: () => svg(`<ellipse cx="50" cy="70" rx="40" ry="18" ${o("#8fd16a")}/>${[14, 30, 46, 62, 78].map((x) => `<rect x="${x - 3}" y="40" width="7" height="32" rx="3" ${o("#fff")}/>`).join("")}<rect x="10" y="48" width="80" height="6" rx="3" ${o("#fff")}/>`),
