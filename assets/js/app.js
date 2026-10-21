@@ -81,7 +81,7 @@ async function settingsModal() {
   const draw = () => {
     m.innerHTML = `<div><h3>設定</h3>
     <div class="set"><span>背景音樂</span>${seg("bgm", [[true, "開"], [false, "關"]])}</div>
-    <div class="set"><span>曲目</span>${seg("music", TRACKS)}</div>
+    <div class="set"><span>曲目</span><select data-sel="music" aria-label="背景音樂曲目">${TRACKS.map(([v, n]) => `<option value="${v}" ${S().music === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
     <div class="set"><span>音量</span><input type="range" min="0" max="1" step="0.1" value="${S().bgmVol}" data-rng="bgmVol" aria-label="音樂音量" style="width:140px"></div>
     <div class="set"><span>音效</span>${seg("sfx", [[true, "開"], [false, "關"]])}</div>
     <div class="set"><span>音量</span><input type="range" min="0" max="1" step="0.1" value="${S().sfxVol}" data-rng="sfxVol" aria-label="音效音量" style="width:140px"></div>
@@ -98,6 +98,7 @@ async function settingsModal() {
     if (b) { const v = b.dataset.v; Settings.set(b.dataset.set, v === "true" ? true : v === "false" ? false : v); draw(); Snd.sfx("click"); }
     if (x) { m.remove(); if (x.dataset.x === "ward") go("/wardrobe"); if (x.dataset.x === "out") auth.signOut(); }
   };
+  m.onchange = (e) => { const s = e.target.closest("[data-sel]"); if (s) { Settings.set(s.dataset.sel, s.value); Snd.sfx("click"); } };
   m.oninput = (e) => { const r = e.target.closest("[data-rng]"); if (r) Settings.set(r.dataset.rng, +r.value); };
 }
 
