@@ -4,12 +4,12 @@
   --serif:"LXGW WenKai TC","Kaiti TC","BiauKai","DFKai-SB","標楷體",serif;
   --sans:"Huninn","Noto Sans TC","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif;
   --hand:"Iansui","LXGW WenKai TC","Kaiti TC","DFKai-SB","標楷體",cursive;
-  --ink:#3b2a14;--soft:#7a6a52;--paper:#fff8e4;--paper2:#ffeec2;--edge:#b88a3e;--wood:#8a5a2b;
-  --gold-a:#ffe27a;--gold-b:#ffb12b;--gold-e:#8a4b08;
-  --blue-a:#8fd2ff;--blue-b:#3d92e6;--blue-e:#1c4f8f;
+  --ink:#3d261c;--soft:#7a6a52;--paper:#fff9eb;--paper2:#ffeec2;--edge:#b88a3e;--wood:#8a5a2b;
+  --gold-a:#fff3b0;--gold-b:#ffc300;--gold-e:#5a3a14;
+  --blue-a:#bde0fe;--blue-b:#3a86ff;--blue-e:#1d56b5;
   --green-a:#a5e977;--green-b:#46b43c;--green-e:#1e6b1a;
-  --red-a:#ff9b86;--red-b:#e5543b;--red-e:#8c2412;
-  --purple:#9b84d6;--sky1:#7cc8ff;--sky2:#dff3ff;
+  --red-a:#ffc2b4;--red-b:#ff6b4a;--red-e:#c83e20;
+  --purple:#9d4edd;--sky1:#7cc8ff;--sky2:#dff3ff;
   --fs:17px;--lh:1.7;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}

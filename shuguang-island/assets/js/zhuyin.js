@@ -44,7 +44,7 @@ export function syllables(run, L = lib) {
   const out = new Array([...run].length).fill("");
   let py = []; try { py = L(run, { type: "array", toneType: "symbol" }) || []; } catch {}
   [...run].forEach((_, i) => { out[i] = pyToZy(py[i] || ""); });
-  for (const [w, z] of Object.entries(fixes)) { let at = run.indexOf(w); const zs = String(z).split(/\s+/); while (at >= 0) { [...w].forEach((_, k) => { if (zs[k]) out[at + k] = zs[k]; }); at = run.indexOf(w, at + 1); } }
+  for (const [w, z] of Object.entries(fixes)) { let at = run.indexOf(w); const zs = String(z).split(/\s+/).map((x) => x.replace(/^([^˙]+)˙$/, "˙$1")); while (at >= 0) { [...w].forEach((_, k) => { if (zs[k]) out[at + k] = zs[k]; }); at = run.indexOf(w, at + 1); } }
   return out;
 }
 const SKIP = "ruby,rt,.katex,input,textarea,select,script,style,[data-nozy],.nozy,.emo,.zy";

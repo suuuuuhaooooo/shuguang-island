@@ -3,6 +3,7 @@ import { esc, tx } from "./tx.js";
 import { Zhuyin } from "./zhuyin.js";
 import { Settings, Snd } from "./audio.js";
 import { art, initArt, pic, uiIcon } from "./art.js";
+import { cpuSay } from "./cpu-lines.js";
 
 const CFG = window.SI_CONFIG || {};
 const DOMS = [["數與量", "🔢", "d0"], ["圖形與空間", "🔷", "d1"], ["測量", "📏", "d2"], ["統計與規律", "📊", "d3"], ["解題與關係", "🧩", "d4"]];
@@ -341,7 +342,7 @@ VIEWS.battle = async ([id]) => {
     let body;
     if (intermission) {
       body = `<div class="qcard" style="text-align:center">${last ? `<div>${last.you ? "✅ 你答對了" : "❌ 你沒答對"}${last.youDmg ? `,對手 -${last.youDmg}` : ""}　${last.foe ? "對手答對了" : "對手沒答對"}${last.foeDmg ? `,你 -${last.foeDmg}` : ""}<br><small class="muted">上一題答案:${tx(last.a)}</small></div>` : ""}
-      <h3 style="margin:.6em 0 0">第 ${r.round + 1} 回合 <span class="hl">準備!</span></h3><div class="big" id="cd">${Math.ceil(r.startsIn / 1000)}</div></div>`;
+      ${r.foe.cpu ? `<div class="bannerx" style="color:#fff">💬 ${esc(r.foe.nick)}:${esc(last ? cpuSay(r.foe.cpu, last.foe ? "right" : "wrong", r.round) : cpuSay(r.foe.cpu, "open", ME.wallet.earned))}</div>` : ""}<h3 style="margin:.6em 0 0">第 ${r.round + 1} 回合 <span class="hl">準備!</span></h3><div class="big" id="cd">${Math.ceil(r.startsIn / 1000)}</div></div>`;
     } else if (r.answered) {
       body = `<div class="qcard" style="text-align:center"><h3>已送出!</h3><p class="muted" id="foeS">${r.foeAnswered ? "對手也答好了,結算中…" : "等對手作答…"}</p></div>`;
     } else {
@@ -359,7 +360,7 @@ VIEWS.battle = async ([id]) => {
     const win = r.result === "win", rw = r.reward || {};
     Snd.sfx(win ? "win" : r.result === "draw" ? "ok" : "lose"); if (win) Snd.bgm("win");
     m.innerHTML = `<div class="arena">${fighters(r)}<div class="qcard result"><div class="big">${win ? "🏆" : r.result === "draw" ? "🤝" : "💪"}</div><h2>${win ? "你贏了!" : r.result === "draw" ? "平手!" : "下次一定贏!"}</h2>
-      <p>${rw.give ? `獲得 <b>💎 ${rw.give}</b>` : "今天的對戰結晶已經拿滿囉"}${rw.capped && rw.give ? `(今天快到上限了)` : ""}</p>
+      ${r.foe.cpu ? `<div class="bannerx" style="color:#fff">💬 ${esc(r.foe.nick)}:${esc(cpuSay(r.foe.cpu, win ? "lose" : r.result === "draw" ? "win" : "win", r.log.length))}</div>` : ""}<p>${rw.give ? `獲得 <b>💎 ${rw.give}</b>` : "今天的對戰結晶已經拿滿囉"}${rw.capped && rw.give ? `(今天快到上限了)` : ""}</p>
       <div class="tbl"><table><tr><th>回合</th><th>答案</th><th>你</th><th>對手</th></tr>${r.log.map((x) => `<tr><td>${x.r + 1}</td><td>${tx(x.a)}</td><td>${x.you ? "✅" + (x.youDmg ? " -" + x.youDmg : "") : "❌"}</td><td>${x.foe ? "✅" + (x.foeDmg ? " -" + x.foeDmg : "") : "❌"}</td></tr>`).join("")}</table></div>
       <p><a class="btn" href="#/duel">再比一場</a> <a class="btn alt" href="#/town">回地圖</a></p></div></div>`;
     dead = true; refreshMe().catch(() => {});
