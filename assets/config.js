@@ -14,5 +14,8 @@ window.SI_CONFIG = {
   audio: true,
   /* 循環動態影片放進 assets/video/(title.mp4、world.mp4、battle.mp4,6–10 秒、可無縫循環、小於 3MB)之後改成 true。沒有影片時,畫面本來就有 SVG 動畫。 */
   video: false,
+  /* 題庫圖片(SVG/PNG)放在「數學筆記本」網站的 assets/q/ 底下。把筆記本網站的題圖資料夾網址填在這裡(結尾要有 /),
+     例如 "https://你的帳號.github.io/筆記本repo名/assets/q/";留空就讀本站的 assets/q/。 */
+  qBase: "",
   idleMinutes: 20
 };

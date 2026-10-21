@@ -42,7 +42,7 @@ const errMsg = (e) => (ERR[e && e.code] || ("出了點問題(" + ((e && e.code) 
 
 /* ---------- 小工具 ---------- */
 const $ = (s, r = document) => r.querySelector(s);
-const imgUrl = (p) => { const m = /^d:([0-9a-f]{16})$/.exec(p || ""); return m ? (ME && ME.config.imgBase || "") + "/api/img/" + m[1] : ""; };
+const imgUrl = (p) => { p = String(p || ""); const m = /^d:([0-9a-f]{16})$/.exec(p); if (m) return (ME && ME.config.imgBase || "") + "/api/img/" + m[1]; if (/^https:\/\//.test(p)) return p; return /^[\w.-]{1,80}$/.test(p) ? ((CFG.qBase || "assets/q/") + p) : ""; }; // d:雜湊=資料庫圖;https 網址;檔名=題圖資料夾(config.js 的 qBase,預設本站 assets/q/)
 const emoOf = (id, fb) => EMO[id] || fb || "";
 const itemPic = (id, fb, cls) => pic(id, emoOf(id, fb), cls);
 function toast(msg) { const d = document.createElement("div"); d.className = "toast"; d.textContent = msg; $("#toasts").appendChild(d); setTimeout(() => d.remove(), 2800); }
